@@ -1,0 +1,617 @@
+2026-06-23 01:17:36 - Starting cron scrape job...
+Traceback (most recent call last):
+  File "/home/berk/code/customer-voice/scraper/main.py", line 20, in <module>
+    from analyzer import analyze_review
+  File "/home/berk/code/customer-voice/scraper/analyzer.py", line 14, in <module>
+    from config import CATEGORIES, SENTIMENTS
+  File "/home/berk/code/customer-voice/scraper/config.py", line 10, in <module>
+    from dotenv import load_dotenv
+ModuleNotFoundError: No module named 'dotenv'
+2026-06-23 01:17:36 - Cron scrape job completed.
+2026-06-23 01:18:00 - Starting cron scrape job...
+2026-06-23 01:18:00  INFO      pipeline  ============================================================
+2026-06-23 01:18:00  INFO      pipeline  Customer Voice Pipeline — starting
+2026-06-23 01:18:00  INFO      pipeline  ============================================================
+2026-06-23 01:18:00  INFO      pipeline  ── Step 1/3: Scraping all platforms ──
+2026-06-23 01:18:00  INFO      pipeline  CRON MODE: Running lightweight incremental scrape.
+2026-06-23 01:18:00  INFO      scraper  Scraping Play Store for 'com.turknet.oim' historically (target total=100)…
+2026-06-23 01:18:00  INFO      scraper  Play Store: score=1, sort=NEWEST, count=50...
+2026-06-23 01:18:01  INFO      scraper  Play Store: score=1, sort=MOST_RELEVANT, count=50...
+2026-06-23 01:18:01  INFO      scraper  Play Store: score=2, sort=NEWEST, count=50...
+2026-06-23 01:18:02  INFO      scraper  Play Store: score=2, sort=MOST_RELEVANT, count=50...
+2026-06-23 01:18:02  INFO      scraper  Play Store: score=3, sort=NEWEST, count=50...
+2026-06-23 01:18:02  INFO      scraper  Play Store: score=3, sort=MOST_RELEVANT, count=50...
+2026-06-23 01:18:03  INFO      scraper  Play Store: score=4, sort=NEWEST, count=50...
+2026-06-23 01:18:03  INFO      scraper  Play Store: score=4, sort=MOST_RELEVANT, count=50...
+2026-06-23 01:18:03  INFO      scraper  Play Store: score=5, sort=NEWEST, count=50...
+2026-06-23 01:18:04  INFO      scraper  Play Store: score=5, sort=MOST_RELEVANT, count=50...
+2026-06-23 01:18:04  INFO      scraper  Play Store: fetched 500 reviews total.
+2026-06-23 01:18:04  INFO      pipeline  Play Store: 500 reviews
+2026-06-23 01:18:04  INFO      scraper  Scraping App Store via RSS for app_id=1001052556...
+2026-06-23 01:18:05  INFO      scraper  App Store RSS: fetched 50 reviews.
+2026-06-23 01:18:05  INFO      pipeline  App Store: 50 reviews
+2026-06-23 01:18:05  INFO      scraper  Şikayetvar (Genel): fetching page 1 → https://www.sikayetvar.com/turknet?page=1
+2026-06-23 01:18:08  INFO      scraper  Şikayetvar (Genel): fetching page 2 → https://www.sikayetvar.com/turknet?page=2
+2026-06-23 01:18:12  INFO      scraper  Şikayetvar (Abonelik): fetching page 1 → https://www.sikayetvar.com/turknet/abonelik?page=1
+2026-06-23 01:18:12  INFO      scraper  Şikayetvar (Abonelik) page 1: scraped 23 complaints.
+2026-06-23 01:18:17  INFO      scraper  Şikayetvar (Abonelik): fetching page 2 → https://www.sikayetvar.com/turknet/abonelik?page=2
+2026-06-23 01:18:17  INFO      scraper  Şikayetvar (Abonelik) page 2: scraped 24 complaints.
+2026-06-23 01:18:21  INFO      scraper  Şikayetvar (Adres Değişikliği): fetching page 1 → https://www.sikayetvar.com/turknet/adres-degisikligi?page=1
+2026-06-23 01:18:21  INFO      scraper  Şikayetvar (Adres Değişikliği) page 1: scraped 24 complaints.
+2026-06-23 01:18:26  INFO      scraper  Şikayetvar (Adres Değişikliği): fetching page 2 → https://www.sikayetvar.com/turknet/adres-degisikligi?page=2
+2026-06-23 01:18:26  INFO      scraper  Şikayetvar (Adres Değişikliği) page 2: scraped 23 complaints.
+2026-06-23 01:18:28  INFO      scraper  Şikayetvar (ADSL): fetching page 1 → https://www.sikayetvar.com/turknet/adsl?page=1
+2026-06-23 01:18:28  INFO      scraper  Şikayetvar (ADSL) page 1: scraped 23 complaints.
+2026-06-23 01:18:33  INFO      scraper  Şikayetvar (ADSL): fetching page 2 → https://www.sikayetvar.com/turknet/adsl?page=2
+2026-06-23 01:18:33  INFO      scraper  Şikayetvar (ADSL) page 2: scraped 23 complaints.
+2026-06-23 01:18:37  INFO      scraper  Şikayetvar (Altyapı): fetching page 1 → https://www.sikayetvar.com/turknet/altyapi?page=1
+2026-06-23 01:18:38  INFO      scraper  Şikayetvar (Altyapı) page 1: scraped 23 complaints.
+2026-06-23 01:18:42  INFO      scraper  Şikayetvar (Altyapı): fetching page 2 → https://www.sikayetvar.com/turknet/altyapi?page=2
+2026-06-23 01:18:42  INFO      scraper  Şikayetvar (Altyapı) page 2: scraped 23 complaints.
+2026-06-23 01:18:47  INFO      scraper  Şikayetvar (Altyapısız İnternet): fetching page 1 → https://www.sikayetvar.com/turknet/altyapisiz-internet?page=1
+2026-06-23 01:18:47  INFO      scraper  Şikayetvar (Altyapısız İnternet) page 1: scraped 22 complaints.
+2026-06-23 01:18:50  INFO      scraper  Şikayetvar (Altyapısız İnternet): fetching page 2 → https://www.sikayetvar.com/turknet/altyapisiz-internet?page=2
+2026-06-23 01:18:51  INFO      scraper  Şikayetvar (Altyapısız İnternet) page 2: scraped 24 complaints.
+2026-06-23 01:18:55  INFO      scraper  Şikayetvar (Arıza): fetching page 1 → https://www.sikayetvar.com/turknet/ariza?page=1
+2026-06-23 01:18:55  INFO      scraper  Şikayetvar (Arıza) page 1: scraped 24 complaints.
+2026-06-23 01:18:58  INFO      scraper  Şikayetvar (Arıza): fetching page 2 → https://www.sikayetvar.com/turknet/ariza?page=2
+2026-06-23 01:18:59  INFO      scraper  Şikayetvar (Arıza) page 2: scraped 24 complaints.
+2026-06-23 01:19:01  INFO      scraper  Şikayetvar (Bakım Çalışması): fetching page 1 → https://www.sikayetvar.com/turknet/bakim-calismasi?page=1
+2026-06-23 01:19:01  INFO      scraper  Şikayetvar (Bakım Çalışması) page 1: scraped 23 complaints.
+2026-06-23 01:19:04  INFO      scraper  Şikayetvar (Bakım Çalışması): fetching page 2 → https://www.sikayetvar.com/turknet/bakim-calismasi?page=2
+2026-06-23 01:19:05  INFO      scraper  Şikayetvar (Bakım Çalışması) page 2: scraped 23 complaints.
+2026-06-23 01:19:09  INFO      scraper  Şikayetvar (Dondurma İşlemi): fetching page 1 → https://www.sikayetvar.com/turknet/dondurma-islemi?page=1
+2026-06-23 01:19:09  INFO      scraper  Şikayetvar (Dondurma İşlemi) page 1: scraped 24 complaints.
+2026-06-23 01:19:12  INFO      scraper  Şikayetvar (Dondurma İşlemi): fetching page 2 → https://www.sikayetvar.com/turknet/dondurma-islemi?page=2
+2026-06-23 01:19:12  INFO      scraper  Şikayetvar (Dondurma İşlemi) page 2: scraped 24 complaints.
+2026-06-23 01:19:17  INFO      scraper  Şikayetvar (Ev Telefonu Hizmeti): fetching page 1 → https://www.sikayetvar.com/turknet/ev-telefonu-hizmeti?page=1
+2026-06-23 01:19:17  INFO      scraper  Şikayetvar (Ev Telefonu Hizmeti) page 1: scraped 24 complaints.
+2026-06-23 01:19:20  INFO      scraper  Şikayetvar (Ev Telefonu Hizmeti): fetching page 2 → https://www.sikayetvar.com/turknet/ev-telefonu-hizmeti?page=2
+2026-06-23 01:19:21  INFO      scraper  Şikayetvar (Ev Telefonu Hizmeti) page 2: scraped 24 complaints.
+2026-06-23 01:19:24  INFO      scraper  Şikayetvar (Evde İnternet): fetching page 1 → https://www.sikayetvar.com/turknet/evde-internet?page=1
+2026-06-23 01:19:24  INFO      scraper  Şikayetvar (Evde İnternet) page 1: scraped 23 complaints.
+2026-06-23 01:19:27  INFO      scraper  Şikayetvar (Evde İnternet): fetching page 2 → https://www.sikayetvar.com/turknet/evde-internet?page=2
+2026-06-23 01:19:27  INFO      scraper  Şikayetvar (Evde İnternet) page 2: scraped 23 complaints.
+2026-06-23 01:19:31  INFO      scraper  Şikayetvar (Fatura): fetching page 1 → https://www.sikayetvar.com/turknet/fatura?page=1
+2026-06-23 01:19:31  INFO      scraper  Şikayetvar (Fatura) page 1: scraped 24 complaints.
+2026-06-23 01:19:36  INFO      scraper  Şikayetvar (Fatura): fetching page 2 → https://www.sikayetvar.com/turknet/fatura?page=2
+2026-06-23 01:19:36  INFO      scraper  Şikayetvar (Fatura) page 2: scraped 24 complaints.
+2026-06-23 01:19:39  INFO      scraper  Şikayetvar (Fiber İnternet): fetching page 1 → https://www.sikayetvar.com/turknet/fiber-internet?page=1
+2026-06-23 01:19:39  INFO      scraper  Şikayetvar (Fiber İnternet) page 1: scraped 24 complaints.
+2026-06-23 01:19:42  INFO      scraper  Şikayetvar (Fiber İnternet): fetching page 2 → https://www.sikayetvar.com/turknet/fiber-internet?page=2
+2026-06-23 01:19:43  INFO      scraper  Şikayetvar (Fiber İnternet) page 2: scraped 24 complaints.
+2026-06-23 01:19:46  INFO      scraper  Şikayetvar (Gezgin İnternet): fetching page 1 → https://www.sikayetvar.com/turknet/gezgin-internet?page=1
+2026-06-23 01:19:47  INFO      scraper  Şikayetvar (Gezgin İnternet) page 1: scraped 24 complaints.
+2026-06-23 01:19:49  INFO      scraper  Şikayetvar (Gezgin İnternet): fetching page 2 → https://www.sikayetvar.com/turknet/gezgin-internet?page=2
+2026-06-23 01:19:50  INFO      scraper  Şikayetvar (Gezgin İnternet) page 2: scraped 22 complaints.
+2026-06-23 01:19:54  INFO      scraper  Şikayetvar (Gigafiber): fetching page 1 → https://www.sikayetvar.com/turknet/gigafiber?page=1
+2026-06-23 01:19:55  INFO      scraper  Şikayetvar (Gigafiber) page 1: scraped 24 complaints.
+2026-06-23 01:19:57  INFO      scraper  Şikayetvar (Gigafiber): fetching page 2 → https://www.sikayetvar.com/turknet/gigafiber?page=2
+2026-06-23 01:19:57  INFO      scraper  Şikayetvar (Gigafiber) page 2: scraped 23 complaints.
+2026-06-23 01:20:02  INFO      scraper  Şikayetvar (Hız Testi): fetching page 1 → https://www.sikayetvar.com/turknet/hiz-testi?page=1
+2026-06-23 01:20:02  INFO      scraper  Şikayetvar (Hız Testi) page 1: scraped 23 complaints.
+2026-06-23 01:20:06  INFO      scraper  Şikayetvar (Hız Testi): fetching page 2 → https://www.sikayetvar.com/turknet/hiz-testi?page=2
+2026-06-23 01:20:07  INFO      scraper  Şikayetvar (Hız Testi) page 2: scraped 21 complaints.
+2026-06-23 01:20:11  INFO      scraper  Şikayetvar (İnternet Kesintisi): fetching page 1 → https://www.sikayetvar.com/turknet/internet-kesintisi?page=1
+2026-06-23 01:20:11  INFO      scraper  Şikayetvar (İnternet Kesintisi) page 1: scraped 24 complaints.
+2026-06-23 01:20:14  INFO      scraper  Şikayetvar (İnternet Kesintisi): fetching page 2 → https://www.sikayetvar.com/turknet/internet-kesintisi?page=2
+2026-06-23 01:20:14  INFO      scraper  Şikayetvar (İnternet Kesintisi) page 2: scraped 24 complaints.
+2026-06-23 01:20:17  INFO      scraper  Şikayetvar (İnternet Paketleri): fetching page 1 → https://www.sikayetvar.com/turknet/internet-paketleri?page=1
+2026-06-23 01:20:17  INFO      scraper  Şikayetvar (İnternet Paketleri) page 1: scraped 24 complaints.
+2026-06-23 01:20:20  INFO      scraper  Şikayetvar (İnternet Paketleri): fetching page 2 → https://www.sikayetvar.com/turknet/internet-paketleri?page=2
+2026-06-23 01:20:21  INFO      scraper  Şikayetvar (İnternet Paketleri) page 2: scraped 24 complaints.
+2026-06-23 01:20:24  INFO      scraper  Şikayetvar (Modem): fetching page 1 → https://www.sikayetvar.com/turknet/modem?page=1
+2026-06-23 01:20:24  INFO      scraper  Şikayetvar (Modem) page 1: scraped 24 complaints.
+2026-06-23 01:20:27  INFO      scraper  Şikayetvar (Modem): fetching page 2 → https://www.sikayetvar.com/turknet/modem?page=2
+2026-06-23 01:20:27  INFO      scraper  Şikayetvar (Modem) page 2: scraped 24 complaints.
+2026-06-23 01:20:30  INFO      scraper  Şikayetvar (Online İşlemler): fetching page 1 → https://www.sikayetvar.com/turknet/online-islemler?page=1
+2026-06-23 01:20:31  INFO      scraper  Şikayetvar (Online İşlemler) page 1: scraped 24 complaints.
+2026-06-23 01:20:35  INFO      scraper  Şikayetvar (Online İşlemler): fetching page 2 → https://www.sikayetvar.com/turknet/online-islemler?page=2
+2026-06-23 01:20:35  INFO      scraper  Şikayetvar (Online İşlemler) page 2: scraped 23 complaints.
+2026-06-23 01:20:39  INFO      scraper  Şikayetvar (Ping Sorunu): fetching page 1 → https://www.sikayetvar.com/turknet/ping-sorunu?page=1
+2026-06-23 01:20:40  INFO      scraper  Şikayetvar (Ping Sorunu) page 1: scraped 24 complaints.
+2026-06-23 01:20:44  INFO      scraper  Şikayetvar (Ping Sorunu): fetching page 2 → https://www.sikayetvar.com/turknet/ping-sorunu?page=2
+2026-06-23 01:20:44  INFO      scraper  Şikayetvar (Ping Sorunu) page 2: scraped 23 complaints.
+2026-06-23 01:20:48  INFO      scraper  Şikayetvar (VDSL): fetching page 1 → https://www.sikayetvar.com/turknet/vdsl?page=1
+2026-06-23 01:20:48  INFO      scraper  Şikayetvar (VDSL) page 1: scraped 24 complaints.
+2026-06-23 01:20:53  INFO      scraper  Şikayetvar (VDSL): fetching page 2 → https://www.sikayetvar.com/turknet/vdsl?page=2
+2026-06-23 01:20:53  INFO      scraper  Şikayetvar (VDSL) page 2: scraped 24 complaints.
+2026-06-23 01:20:58  INFO      scraper  Şikayetvar (Yalın İnternet): fetching page 1 → https://www.sikayetvar.com/turknet/yalin-internet?page=1
+2026-06-23 01:20:58  INFO      scraper  Şikayetvar (Yalın İnternet) page 1: scraped 24 complaints.
+2026-06-23 01:21:02  INFO      scraper  Şikayetvar (Yalın İnternet): fetching page 2 → https://www.sikayetvar.com/turknet/yalin-internet?page=2
+2026-06-23 01:21:02  INFO      scraper  Şikayetvar (Yalın İnternet) page 2: scraped 23 complaints.
+2026-06-23 01:21:07  INFO      scraper  Şikayetvar: total 1083 reviews scraped.
+2026-06-23 01:21:07  INFO      pipeline  Şikayetvar: 1083 reviews
+2026-06-23 01:21:07  INFO      scraper  Ekşi Sözlük: searching for topics matching 'turknet' via → https://eksisozluk.com/basliklar/ara?searchform.keywords=turknet&searchform.sortorder=date
+2026-06-23 01:21:08  INFO      scraper  Ekşi Sözlük: searching for topics matching 'turknet' via → https://eksisozluk.com/basliklar/ara?searchform.keywords=turknet
+2026-06-23 01:21:08  INFO      scraper  Ekşi Sözlük: discovered 89 unique topics matching 'turknet'.
+2026-06-23 01:21:08  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-arkadasini-getir-kampanyasi--5434489'…
+2026-06-23 01:21:08  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-arkadasini-getir-kampanyasi--5434489
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-arkadasini-getir-kampanyasi--5434489' with 95 total pages.
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük: fetching page 94 → https://eksisozluk.com/turknet-arkadasini-getir-kampanyasi--5434489?p=94
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük page 94: scraped 10 entries.
+2026-06-23 01:21:09  WARNING   scraper  Ekşi Sözlük: failed to fetch page 94: name 'time' is not defined
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük: fetching page 95 → https://eksisozluk.com/turknet-arkadasini-getir-kampanyasi--5434489?p=95
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük page 95: scraped 6 entries.
+2026-06-23 01:21:09  WARNING   scraper  Ekşi Sözlük: failed to fetch page 95: name 'time' is not defined
+2026-06-23 01:21:09  INFO      pipeline  Ekşi Sözlük ('turknet-arkadasini-getir-kampanyasi--5434489'): 16 reviews
+2026-06-23 01:21:09  INFO      pipeline  Ekşi Sözlük: fetching topic '19-haziran-2026-turknet-fiyat-degisikligi--8112540'…
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/19-haziran-2026-turknet-fiyat-degisikligi--8112540
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük: resolved topic to '19-haziran-2026-turknet-fiyat-degisikligi--8112540' with 17 total pages.
+2026-06-23 01:21:09  INFO      scraper  Ekşi Sözlük: fetching page 16 → https://eksisozluk.com/19-haziran-2026-turknet-fiyat-degisikligi--8112540?p=16
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük page 16: scraped 10 entries.
+2026-06-23 01:21:10  WARNING   scraper  Ekşi Sözlük: failed to fetch page 16: name 'time' is not defined
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük: fetching page 17 → https://eksisozluk.com/19-haziran-2026-turknet-fiyat-degisikligi--8112540?p=17
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük page 17: scraped 7 entries.
+2026-06-23 01:21:10  WARNING   scraper  Ekşi Sözlük: failed to fetch page 17: name 'time' is not defined
+2026-06-23 01:21:10  INFO      pipeline  Ekşi Sözlük ('19-haziran-2026-turknet-fiyat-degisikligi--8112540'): 17 reviews
+2026-06-23 01:21:10  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-vermedigi-cihazin-parasini-istiyor--8113554'…
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-vermedigi-cihazin-parasini-istiyor--8113554
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-vermedigi-cihazin-parasini-istiyor--8113554' with 1 total pages.
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/turknet-vermedigi-cihazin-parasini-istiyor--8113554?p=1
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük page 1: scraped 3 entries.
+2026-06-23 01:21:10  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:10  INFO      pipeline  Ekşi Sözlük ('turknet-vermedigi-cihazin-parasini-istiyor--8113554'): 3 reviews
+2026-06-23 01:21:10  INFO      pipeline  Ekşi Sözlük: fetching topic 'haziran-2026-turknet-rezilligi--8111869'…
+2026-06-23 01:21:10  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/haziran-2026-turknet-rezilligi--8111869
+2026-06-23 01:21:11  INFO      scraper  Ekşi Sözlük: resolved topic to 'haziran-2026-turknet-rezilligi--8111869' with 1 total pages.
+2026-06-23 01:21:11  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/haziran-2026-turknet-rezilligi--8111869?p=1
+2026-06-23 01:21:11  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:11  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:11  INFO      pipeline  Ekşi Sözlük ('haziran-2026-turknet-rezilligi--8111869'): 1 reviews
+2026-06-23 01:21:11  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-gigafiber--6844339'…
+2026-06-23 01:21:11  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-gigafiber--6844339
+2026-06-23 01:21:12  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-gigafiber--6844339' with 28 total pages.
+2026-06-23 01:21:12  INFO      scraper  Ekşi Sözlük: fetching page 27 → https://eksisozluk.com/turknet-gigafiber--6844339?p=27
+2026-06-23 01:21:12  INFO      scraper  Ekşi Sözlük page 27: scraped 10 entries.
+2026-06-23 01:21:12  WARNING   scraper  Ekşi Sözlük: failed to fetch page 27: name 'time' is not defined
+2026-06-23 01:21:12  INFO      scraper  Ekşi Sözlük: fetching page 28 → https://eksisozluk.com/turknet-gigafiber--6844339?p=28
+2026-06-23 01:21:12  INFO      scraper  Ekşi Sözlük page 28: scraped 1 entries.
+2026-06-23 01:21:12  WARNING   scraper  Ekşi Sözlük: failed to fetch page 28: name 'time' is not defined
+2026-06-23 01:21:12  INFO      pipeline  Ekşi Sözlük ('turknet-gigafiber--6844339'): 11 reviews
+2026-06-23 01:21:12  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-musteri-hizmetleri-rezaleti--5489672'…
+2026-06-23 01:21:12  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-musteri-hizmetleri-rezaleti--5489672
+2026-06-23 01:21:13  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-musteri-hizmetleri-rezaleti--5489672' with 1 total pages.
+2026-06-23 01:21:13  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/turknet-musteri-hizmetleri-rezaleti--5489672?p=1
+2026-06-23 01:21:13  INFO      scraper  Ekşi Sözlük page 1: scraped 7 entries.
+2026-06-23 01:21:13  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:13  INFO      pipeline  Ekşi Sözlük ('turknet-musteri-hizmetleri-rezaleti--5489672'): 7 reviews
+2026-06-23 01:21:13  INFO      pipeline  Ekşi Sözlük: fetching topic '22-mart-turknet-ve-ttnet-rezaleti--8085478'…
+2026-06-23 01:21:13  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/22-mart-turknet-ve-ttnet-rezaleti--8085478
+2026-06-23 01:21:13  INFO      scraper  Ekşi Sözlük: resolved topic to '22-mart-2026-turknet-ve-ttnet-rezaleti--8085481' with 1 total pages.
+2026-06-23 01:21:13  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/22-mart-2026-turknet-ve-ttnet-rezaleti--8085481?p=1
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:14  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:14  INFO      pipeline  Ekşi Sözlük ('22-mart-turknet-ve-ttnet-rezaleti--8085478'): 1 reviews
+2026-06-23 01:21:14  INFO      pipeline  Ekşi Sözlük: fetching topic '22-mart-2026-turknet-ve-ttnet-rezaleti--8085481'…
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/22-mart-2026-turknet-ve-ttnet-rezaleti--8085481
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük: resolved topic to '22-mart-2026-turknet-ve-ttnet-rezaleti--8085481' with 1 total pages.
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/22-mart-2026-turknet-ve-ttnet-rezaleti--8085481?p=1
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:14  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:14  INFO      pipeline  Ekşi Sözlük ('22-mart-2026-turknet-ve-ttnet-rezaleti--8085481'): 1 reviews
+2026-06-23 01:21:14  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-internet-kesintisi--6875867'…
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-internet-kesintisi--6875867
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-internet-kesintisi--6875867' with 1 total pages.
+2026-06-23 01:21:14  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/turknet-internet-kesintisi--6875867?p=1
+2026-06-23 01:21:15  INFO      scraper  Ekşi Sözlük page 1: scraped 2 entries.
+2026-06-23 01:21:15  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:15  INFO      pipeline  Ekşi Sözlük ('turknet-internet-kesintisi--6875867'): 2 reviews
+2026-06-23 01:21:15  INFO      pipeline  Ekşi Sözlük: fetching topic '20-ocak-2026-turknet-rezaleti--8066420'…
+2026-06-23 01:21:15  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/20-ocak-2026-turknet-rezaleti--8066420
+2026-06-23 01:21:15  INFO      scraper  Ekşi Sözlük: resolved topic to '20-ocak-2026-turknet-rezaleti--8066420' with 1 total pages.
+2026-06-23 01:21:15  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/20-ocak-2026-turknet-rezaleti--8066420?p=1
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:16  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:16  INFO      pipeline  Ekşi Sözlük ('20-ocak-2026-turknet-rezaleti--8066420'): 1 reviews
+2026-06-23 01:21:16  INFO      pipeline  Ekşi Sözlük: fetching topic '13-mart-2025-turknet-veritabani-sizintisi--7951590'…
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/13-mart-2025-turknet-veritabani-sizintisi--7951590
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük: resolved topic to '13-mart-2025-turknet-veritabani-sizintisi--7951590' with 18 total pages.
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük: fetching page 17 → https://eksisozluk.com/13-mart-2025-turknet-veritabani-sizintisi--7951590?p=17
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük page 17: scraped 10 entries.
+2026-06-23 01:21:16  WARNING   scraper  Ekşi Sözlük: failed to fetch page 17: name 'time' is not defined
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük: fetching page 18 → https://eksisozluk.com/13-mart-2025-turknet-veritabani-sizintisi--7951590?p=18
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük page 18: scraped 1 entries.
+2026-06-23 01:21:16  WARNING   scraper  Ekşi Sözlük: failed to fetch page 18: name 'time' is not defined
+2026-06-23 01:21:16  INFO      pipeline  Ekşi Sözlük ('13-mart-2025-turknet-veritabani-sizintisi--7951590'): 11 reviews
+2026-06-23 01:21:16  INFO      pipeline  Ekşi Sözlük: fetching topic '23-ekim-2025-turknet-rezaleti--8038723'…
+2026-06-23 01:21:16  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/23-ekim-2025-turknet-rezaleti--8038723
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük: resolved topic to '23-ekim-2025-turknet-rezaleti--8038723' with 1 total pages.
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/23-ekim-2025-turknet-rezaleti--8038723?p=1
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:17  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:17  INFO      pipeline  Ekşi Sözlük ('23-ekim-2025-turknet-rezaleti--8038723'): 1 reviews
+2026-06-23 01:21:17  INFO      pipeline  Ekşi Sözlük: fetching topic '19-ocak-2024-turknet-zammi--7771306'…
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/19-ocak-2024-turknet-zammi--7771306
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük: resolved topic to '19-ocak-2024-turknet-zammi--7771306' with 13 total pages.
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük: fetching page 12 → https://eksisozluk.com/19-ocak-2024-turknet-zammi--7771306?p=12
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük page 12: scraped 10 entries.
+2026-06-23 01:21:17  WARNING   scraper  Ekşi Sözlük: failed to fetch page 12: name 'time' is not defined
+2026-06-23 01:21:17  INFO      scraper  Ekşi Sözlük: fetching page 13 → https://eksisozluk.com/19-ocak-2024-turknet-zammi--7771306?p=13
+2026-06-23 01:21:18  INFO      scraper  Ekşi Sözlük page 13: scraped 2 entries.
+2026-06-23 01:21:18  WARNING   scraper  Ekşi Sözlük: failed to fetch page 13: name 'time' is not defined
+2026-06-23 01:21:18  INFO      pipeline  Ekşi Sözlük ('19-ocak-2024-turknet-zammi--7771306'): 12 reviews
+2026-06-23 01:21:18  INFO      pipeline  Ekşi Sözlük: fetching topic 'digiturk-ve-turknet-tarafindan-dolandirilmam--7052035'…
+2026-06-23 01:21:18  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/digiturk-ve-turknet-tarafindan-dolandirilmam--7052035
+2026-06-23 01:21:18  INFO      scraper  Ekşi Sözlük: resolved topic to 'digiturk-ve-turknet-tarafindan-dolandirilmam--7052035' with 13 total pages.
+2026-06-23 01:21:18  INFO      scraper  Ekşi Sözlük: fetching page 12 → https://eksisozluk.com/digiturk-ve-turknet-tarafindan-dolandirilmam--7052035?p=12
+2026-06-23 01:21:18  INFO      scraper  Ekşi Sözlük page 12: scraped 10 entries.
+2026-06-23 01:21:18  WARNING   scraper  Ekşi Sözlük: failed to fetch page 12: name 'time' is not defined
+2026-06-23 01:21:18  INFO      scraper  Ekşi Sözlük: fetching page 13 → https://eksisozluk.com/digiturk-ve-turknet-tarafindan-dolandirilmam--7052035?p=13
+2026-06-23 01:21:19  INFO      scraper  Ekşi Sözlük page 13: scraped 4 entries.
+2026-06-23 01:21:19  WARNING   scraper  Ekşi Sözlük: failed to fetch page 13: name 'time' is not defined
+2026-06-23 01:21:19  INFO      pipeline  Ekşi Sözlük ('digiturk-ve-turknet-tarafindan-dolandirilmam--7052035'): 14 reviews
+2026-06-23 01:21:19  INFO      pipeline  Ekşi Sözlük: fetching topic '3-eylul-2025-turknet-rezaleti--8022542'…
+2026-06-23 01:21:19  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/3-eylul-2025-turknet-rezaleti--8022542
+2026-06-23 01:21:19  INFO      scraper  Ekşi Sözlük: resolved topic to '3-eylul-2025-turknet-rezaleti--8022542' with 1 total pages.
+2026-06-23 01:21:19  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/3-eylul-2025-turknet-rezaleti--8022542?p=1
+2026-06-23 01:21:19  INFO      scraper  Ekşi Sözlük page 1: scraped 4 entries.
+2026-06-23 01:21:19  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:19  INFO      pipeline  Ekşi Sözlük ('3-eylul-2025-turknet-rezaleti--8022542'): 4 reviews
+2026-06-23 01:21:19  INFO      pipeline  Ekşi Sözlük: fetching topic '18-temmuz-2025-turknet-zammi--8005450'…
+2026-06-23 01:21:19  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/18-temmuz-2025-turknet-zammi--8005450
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük: resolved topic to '18-temmuz-2025-turknet-zammi--8005450' with 12 total pages.
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük: fetching page 11 → https://eksisozluk.com/18-temmuz-2025-turknet-zammi--8005450?p=11
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük page 11: scraped 10 entries.
+2026-06-23 01:21:20  WARNING   scraper  Ekşi Sözlük: failed to fetch page 11: name 'time' is not defined
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük: fetching page 12 → https://eksisozluk.com/18-temmuz-2025-turknet-zammi--8005450?p=12
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük page 12: scraped 7 entries.
+2026-06-23 01:21:20  WARNING   scraper  Ekşi Sözlük: failed to fetch page 12: name 'time' is not defined
+2026-06-23 01:21:20  INFO      pipeline  Ekşi Sözlük ('18-temmuz-2025-turknet-zammi--8005450'): 17 reviews
+2026-06-23 01:21:20  INFO      pipeline  Ekşi Sözlük: fetching topic '1-agustos-2025-turknet-fiyat-degisikligi--8005427'…
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/1-agustos-2025-turknet-fiyat-degisikligi--8005427
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük: resolved topic to '1-agustos-2025-turknet-fiyat-degisikligi--8005427' with 1 total pages.
+2026-06-23 01:21:20  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/1-agustos-2025-turknet-fiyat-degisikligi--8005427?p=1
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük page 1: scraped 2 entries.
+2026-06-23 01:21:21  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:21  INFO      pipeline  Ekşi Sözlük ('1-agustos-2025-turknet-fiyat-degisikligi--8005427'): 2 reviews
+2026-06-23 01:21:21  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-higiga-kampanyasi--8002197'…
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-higiga-kampanyasi--8002197
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-higiga-kampanyasi--8002197' with 1 total pages.
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/turknet-higiga-kampanyasi--8002197?p=1
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük page 1: scraped 2 entries.
+2026-06-23 01:21:21  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:21  INFO      pipeline  Ekşi Sözlük ('turknet-higiga-kampanyasi--8002197'): 2 reviews
+2026-06-23 01:21:21  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-fiber-altyapi--6689347'…
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-fiber-altyapi--6689347
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-fiber-altyapi--6689347' with 1 total pages.
+2026-06-23 01:21:21  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/turknet-fiber-altyapi--6689347?p=1
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük page 1: scraped 4 entries.
+2026-06-23 01:21:22  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:22  INFO      pipeline  Ekşi Sözlük ('turknet-fiber-altyapi--6689347'): 4 reviews
+2026-06-23 01:21:22  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-rezaleti--5049482'…
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-rezaleti--5049482
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-rezaleti--5049482' with 4 total pages.
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük: fetching page 3 → https://eksisozluk.com/turknet-rezaleti--5049482?p=3
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük page 3: scraped 10 entries.
+2026-06-23 01:21:22  WARNING   scraper  Ekşi Sözlük: failed to fetch page 3: name 'time' is not defined
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük: fetching page 4 → https://eksisozluk.com/turknet-rezaleti--5049482?p=4
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük page 4: scraped 6 entries.
+2026-06-23 01:21:22  WARNING   scraper  Ekşi Sözlük: failed to fetch page 4: name 'time' is not defined
+2026-06-23 01:21:22  INFO      pipeline  Ekşi Sözlük ('turknet-rezaleti--5049482'): 16 reviews
+2026-06-23 01:21:22  INFO      pipeline  Ekşi Sözlük: fetching topic '3-gundur-duzelmeyen-turknet-ariza-rezaleti--7926219'…
+2026-06-23 01:21:22  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/3-gundur-duzelmeyen-turknet-ariza-rezaleti--7926219
+2026-06-23 01:21:23  INFO      scraper  Ekşi Sözlük: resolved topic to '3-gundur-duzelmeyen-turknet-ariza-rezaleti--7926219' with 1 total pages.
+2026-06-23 01:21:23  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/3-gundur-duzelmeyen-turknet-ariza-rezaleti--7926219?p=1
+2026-06-23 01:21:23  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:23  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:23  INFO      pipeline  Ekşi Sözlük ('3-gundur-duzelmeyen-turknet-ariza-rezaleti--7926219'): 1 reviews
+2026-06-23 01:21:23  INFO      pipeline  Ekşi Sözlük: fetching topic 'top-sakal-xiaomi-turk-telekom-turknet-amd--6559576'…
+2026-06-23 01:21:23  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/top-sakal-xiaomi-turk-telekom-turknet-amd--6559576
+2026-06-23 01:21:23  INFO      scraper  Ekşi Sözlük: resolved topic to 'top-sakal-xiaomi-turk-telekom-turknet-amd--6559576' with 23 total pages.
+2026-06-23 01:21:23  INFO      scraper  Ekşi Sözlük: fetching page 22 → https://eksisozluk.com/top-sakal-xiaomi-turk-telekom-turknet-amd--6559576?p=22
+2026-06-23 01:21:24  INFO      scraper  Ekşi Sözlük page 22: scraped 10 entries.
+2026-06-23 01:21:24  WARNING   scraper  Ekşi Sözlük: failed to fetch page 22: name 'time' is not defined
+2026-06-23 01:21:24  INFO      scraper  Ekşi Sözlük: fetching page 23 → https://eksisozluk.com/top-sakal-xiaomi-turk-telekom-turknet-amd--6559576?p=23
+2026-06-23 01:21:24  INFO      scraper  Ekşi Sözlük page 23: scraped 8 entries.
+2026-06-23 01:21:24  WARNING   scraper  Ekşi Sözlük: failed to fetch page 23: name 'time' is not defined
+2026-06-23 01:21:24  INFO      pipeline  Ekşi Sözlük ('top-sakal-xiaomi-turk-telekom-turknet-amd--6559576'): 18 reviews
+2026-06-23 01:21:24  INFO      pipeline  Ekşi Sözlük: fetching topic '20-eylul-2024-turknet-rezaleti--7880049'…
+2026-06-23 01:21:24  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/20-eylul-2024-turknet-rezaleti--7880049
+2026-06-23 01:21:24  INFO      scraper  Ekşi Sözlük: resolved topic to '20-eylul-2024-turknet-rezaleti--7880049' with 1 total pages.
+2026-06-23 01:21:24  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/20-eylul-2024-turknet-rezaleti--7880049?p=1
+2026-06-23 01:21:25  INFO      scraper  Ekşi Sözlük page 1: scraped 3 entries.
+2026-06-23 01:21:25  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:25  INFO      pipeline  Ekşi Sözlük ('20-eylul-2024-turknet-rezaleti--7880049'): 3 reviews
+2026-06-23 01:21:25  INFO      pipeline  Ekşi Sözlük: fetching topic '19-eylul-2024-turknet-internet-kesintisi--7879336'…
+2026-06-23 01:21:25  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/19-eylul-2024-turknet-internet-kesintisi--7879336
+2026-06-23 01:21:25  INFO      scraper  Ekşi Sözlük: resolved topic to '19-eylul-2024-turknet-internet-kesintisi--7879336' with 1 total pages.
+2026-06-23 01:21:25  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/19-eylul-2024-turknet-internet-kesintisi--7879336?p=1
+2026-06-23 01:21:25  INFO      scraper  Ekşi Sözlük page 1: scraped 2 entries.
+2026-06-23 01:21:25  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:25  INFO      pipeline  Ekşi Sözlük ('19-eylul-2024-turknet-internet-kesintisi--7879336'): 2 reviews
+2026-06-23 01:21:25  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-millenicom-atismasi--5870279'…
+2026-06-23 01:21:25  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-millenicom-atismasi--5870279
+2026-06-23 01:21:26  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-millenicom-atismasi--5870279' with 4 total pages.
+2026-06-23 01:21:26  INFO      scraper  Ekşi Sözlük: fetching page 3 → https://eksisozluk.com/turknet-millenicom-atismasi--5870279?p=3
+2026-06-23 01:21:26  INFO      scraper  Ekşi Sözlük page 3: scraped 10 entries.
+2026-06-23 01:21:26  WARNING   scraper  Ekşi Sözlük: failed to fetch page 3: name 'time' is not defined
+2026-06-23 01:21:26  INFO      scraper  Ekşi Sözlük: fetching page 4 → https://eksisozluk.com/turknet-millenicom-atismasi--5870279?p=4
+2026-06-23 01:21:27  INFO      scraper  Ekşi Sözlük page 4: scraped 3 entries.
+2026-06-23 01:21:27  WARNING   scraper  Ekşi Sözlük: failed to fetch page 4: name 'time' is not defined
+2026-06-23 01:21:27  INFO      pipeline  Ekşi Sözlük ('turknet-millenicom-atismasi--5870279'): 13 reviews
+2026-06-23 01:21:27  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-smartfy--7860462'…
+2026-06-23 01:21:27  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-smartfy--7860462
+2026-06-23 01:21:27  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-smartfy--7860462' with 1 total pages.
+2026-06-23 01:21:27  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/turknet-smartfy--7860462?p=1
+2026-06-23 01:21:27  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:27  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:27  INFO      pipeline  Ekşi Sözlük ('turknet-smartfy--7860462'): 1 reviews
+2026-06-23 01:21:27  INFO      pipeline  Ekşi Sözlük: fetching topic '15-temmuz-2024-turknet-zammi--7846616'…
+2026-06-23 01:21:27  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/15-temmuz-2024-turknet-zammi--7846616
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük: resolved topic to '15-temmuz-2024-turknet-zammi--7846616' with 9 total pages.
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük: fetching page 8 → https://eksisozluk.com/15-temmuz-2024-turknet-zammi--7846616?p=8
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük page 8: scraped 10 entries.
+2026-06-23 01:21:28  WARNING   scraper  Ekşi Sözlük: failed to fetch page 8: name 'time' is not defined
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük: fetching page 9 → https://eksisozluk.com/15-temmuz-2024-turknet-zammi--7846616?p=9
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük page 9: scraped 8 entries.
+2026-06-23 01:21:28  WARNING   scraper  Ekşi Sözlük: failed to fetch page 9: name 'time' is not defined
+2026-06-23 01:21:28  INFO      pipeline  Ekşi Sözlük ('15-temmuz-2024-turknet-zammi--7846616'): 18 reviews
+2026-06-23 01:21:28  INFO      pipeline  Ekşi Sözlük: fetching topic '31-temmuz-2024-turknet-zammi--7855793'…
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/31-temmuz-2024-turknet-zammi--7855793
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük: resolved topic to '31-temmuz-2024-turknet-zammi--7855793' with 1 total pages.
+2026-06-23 01:21:28  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/31-temmuz-2024-turknet-zammi--7855793?p=1
+2026-06-23 01:21:29  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:29  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:29  INFO      pipeline  Ekşi Sözlük ('31-temmuz-2024-turknet-zammi--7855793'): 1 reviews
+2026-06-23 01:21:29  INFO      pipeline  Ekşi Sözlük: fetching topic '9-temmuz-2024-turknet-rezaleti--7848555'…
+2026-06-23 01:21:29  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/9-temmuz-2024-turknet-rezaleti--7848555
+2026-06-23 01:21:29  INFO      scraper  Ekşi Sözlük: resolved topic to '9-temmuz-2024-turknet-rezaleti--7848555' with 1 total pages.
+2026-06-23 01:21:29  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/9-temmuz-2024-turknet-rezaleti--7848555?p=1
+2026-06-23 01:21:29  INFO      scraper  Ekşi Sözlük page 1: scraped 6 entries.
+2026-06-23 01:21:29  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:29  INFO      pipeline  Ekşi Sözlük ('9-temmuz-2024-turknet-rezaleti--7848555'): 6 reviews
+2026-06-23 01:21:29  INFO      pipeline  Ekşi Sözlük: fetching topic '10-temmuz-2024-turknet-rezaleti--7848783'…
+2026-06-23 01:21:29  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/10-temmuz-2024-turknet-rezaleti--7848783
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük: resolved topic to '10-temmuz-2024-turknet-rezaleti--7848783' with 1 total pages.
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/10-temmuz-2024-turknet-rezaleti--7848783?p=1
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük page 1: scraped 3 entries.
+2026-06-23 01:21:30  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:30  INFO      pipeline  Ekşi Sözlük ('10-temmuz-2024-turknet-rezaleti--7848783'): 3 reviews
+2026-06-23 01:21:30  INFO      pipeline  Ekşi Sözlük: fetching topic '15-temmuz-turknet-zammi--7846650'…
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/15-temmuz-turknet-zammi--7846650
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük: resolved topic to '15-temmuz-turknet-zammi--7846650' with 1 total pages.
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/15-temmuz-turknet-zammi--7846650?p=1
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:30  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:30  INFO      pipeline  Ekşi Sözlük ('15-temmuz-turknet-zammi--7846650'): 1 reviews
+2026-06-23 01:21:30  INFO      pipeline  Ekşi Sözlük: fetching topic '16-mayis-2024-turknet-ismiyle-dolandiricilik--7824643'…
+2026-06-23 01:21:30  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/16-mayis-2024-turknet-ismiyle-dolandiricilik--7824643
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük: resolved topic to '16-mayis-2024-turknet-ismiyle-dolandiricilik--7824643' with 1 total pages.
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/16-mayis-2024-turknet-ismiyle-dolandiricilik--7824643?p=1
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:31  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:31  INFO      pipeline  Ekşi Sözlük ('16-mayis-2024-turknet-ismiyle-dolandiricilik--7824643'): 1 reviews
+2026-06-23 01:21:31  INFO      pipeline  Ekşi Sözlük: fetching topic 'turknet-smartyfi--7667496'…
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/turknet-smartyfi--7667496
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük: resolved topic to 'turknet-smartyfi--7667496' with 1 total pages.
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/turknet-smartyfi--7667496?p=1
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük page 1: scraped 2 entries.
+2026-06-23 01:21:31  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:31  INFO      pipeline  Ekşi Sözlük ('turknet-smartyfi--7667496'): 2 reviews
+2026-06-23 01:21:31  INFO      pipeline  Ekşi Sözlük: fetching topic '13-mart-2024-turknet-rezaleti--7794293'…
+2026-06-23 01:21:31  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/13-mart-2024-turknet-rezaleti--7794293
+2026-06-23 01:21:32  INFO      scraper  Ekşi Sözlük: resolved topic to '13-mart-2024-turknet-rezaleti--7794293' with 1 total pages.
+2026-06-23 01:21:32  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/13-mart-2024-turknet-rezaleti--7794293?p=1
+2026-06-23 01:21:32  INFO      scraper  Ekşi Sözlük page 1: scraped 3 entries.
+2026-06-23 01:21:32  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:32  INFO      pipeline  Ekşi Sözlük ('13-mart-2024-turknet-rezaleti--7794293'): 3 reviews
+2026-06-23 01:21:32  INFO      pipeline  Ekşi Sözlük: fetching topic '27-subat-2024-turknet-zammi--7787926'…
+2026-06-23 01:21:32  INFO      scraper  Ekşi Sözlük: resolving initial topic url → https://eksisozluk.com/27-subat-2024-turknet-zammi--7787926
+2026-06-23 01:21:32  INFO      scraper  Ekşi Sözlük: resolved topic to '27-subat-2024-turknet-zammi--7787926' with 1 total pages.
+2026-06-23 01:21:32  INFO      scraper  Ekşi Sözlük: fetching page 1 → https://eksisozluk.com/27-subat-2024-turknet-zammi--7787926?p=1
+2026-06-23 01:21:32  INFO      scraper  Ekşi Sözlük page 1: scraped 1 entries.
+2026-06-23 01:21:32  WARNING   scraper  Ekşi Sözlük: failed to fetch page 1: name 'time' is not defined
+2026-06-23 01:21:32  INFO      pipeline  Ekşi Sözlük ('27-subat-2024-turknet-zammi--7787926'): 1 reviews
+2026-06-23 01:21:32  INFO      pipeline  Total scraped: 1850 reviews across all platforms.
+2026-06-23 01:21:32  INFO      pipeline  ── Step 2/3: Analysing reviews with rule-based system ──
+2026-06-23 01:21:32  INFO      pipeline  Analysed 10 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 20 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 30 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 40 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 50 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 60 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 70 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 80 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 90 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 100 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 110 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 120 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 130 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 140 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 150 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 160 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 170 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 180 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 190 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 200 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 210 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 220 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 230 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 240 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 250 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 260 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 270 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 280 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 290 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 300 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 310 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 320 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 330 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 340 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 350 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 360 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 370 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 380 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 390 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 400 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 410 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 420 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 430 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 440 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 450 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 460 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 470 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 480 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 490 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 500 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 510 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 520 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 530 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 540 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 550 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 560 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 570 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 580 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 590 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 600 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 610 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 620 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 630 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 640 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 650 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 660 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 670 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 680 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 690 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 700 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 710 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 720 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 730 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 740 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 750 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 760 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 770 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 780 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 790 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 800 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 810 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 820 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 830 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 840 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 850 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 860 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 870 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 880 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 890 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 900 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 910 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 920 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 930 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 940 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 950 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 960 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 970 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 980 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 990 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1000 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1010 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1020 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1030 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1040 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1050 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1060 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1070 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1080 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1090 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1100 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1110 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1120 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1130 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1140 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1150 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1160 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1170 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1180 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1190 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1200 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1210 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1220 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1230 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1240 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1250 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1260 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1270 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1280 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1290 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1300 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1310 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1320 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1330 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1340 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1350 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1360 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1370 / 1850 reviews.
+2026-06-23 01:21:32  INFO      pipeline  Analysed 1380 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1390 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1400 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1410 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1420 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1430 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1440 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1450 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1460 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1470 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1480 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1490 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1500 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1510 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1520 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1530 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1540 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1550 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1560 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1570 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1580 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1590 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1600 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1610 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1620 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1630 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1640 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1650 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1660 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1670 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1680 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1690 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1700 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1710 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1720 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1730 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1740 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1750 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1760 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1770 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1780 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1790 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1800 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1810 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1820 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1830 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1840 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  Analysed 1850 / 1850 reviews.
+2026-06-23 01:21:33  INFO      pipeline  ── Step 3/3: Saving to Supabase ──
+2026-06-23 01:21:33  INFO      db  Supabase client initialised (https://ythxqweylwxtghefjlxi.supabase.co).
+2026-06-23 01:21:33  INFO      httpx  HTTP Request: GET https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?select=text_hash&offset=0&limit=1000 "HTTP/2 200 OK"
+2026-06-23 01:21:34  INFO      httpx  HTTP Request: GET https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?select=text_hash&offset=1000&limit=1000 "HTTP/2 200 OK"
+2026-06-23 01:21:34  INFO      httpx  HTTP Request: GET https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?select=text_hash&offset=2000&limit=1000 "HTTP/2 200 OK"
+2026-06-23 01:21:35  INFO      httpx  HTTP Request: GET https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?select=text_hash&offset=3000&limit=1000 "HTTP/2 200 OK"
+2026-06-23 01:21:36  INFO      httpx  HTTP Request: GET https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?select=text_hash&offset=4000&limit=1000 "HTTP/2 200 OK"
+2026-06-23 01:21:36  INFO      httpx  HTTP Request: GET https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?select=text_hash&offset=5000&limit=1000 "HTTP/2 200 OK"
+2026-06-23 01:21:36  INFO      httpx  HTTP Request: GET https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?select=text_hash&offset=6000&limit=1000 "HTTP/2 200 OK"
+2026-06-23 01:21:36  INFO      db  Loaded 6325 existing hashes from DB.
+2026-06-23 01:21:37  INFO      httpx  HTTP Request: POST https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?columns=%22text_hash%22%2C%22category%22%2C%22platform_name%22%2C%22rating%22%2C%22scraped_at%22%2C%22original_text%22%2C%22source_url%22%2C%22subject%22%2C%22author%22%2C%22sentiment%22 "HTTP/2 201 Created"
+2026-06-23 01:21:37  INFO      db  Inserted chunk 1–100 (100 rows).
+2026-06-23 01:21:38  INFO      httpx  HTTP Request: POST https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?columns=%22text_hash%22%2C%22category%22%2C%22platform_name%22%2C%22rating%22%2C%22scraped_at%22%2C%22original_text%22%2C%22source_url%22%2C%22subject%22%2C%22author%22%2C%22sentiment%22 "HTTP/2 201 Created"
+2026-06-23 01:21:38  INFO      db  Inserted chunk 101–200 (100 rows).
+2026-06-23 01:21:39  INFO      httpx  HTTP Request: POST https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?columns=%22text_hash%22%2C%22category%22%2C%22platform_name%22%2C%22rating%22%2C%22scraped_at%22%2C%22original_text%22%2C%22source_url%22%2C%22subject%22%2C%22author%22%2C%22sentiment%22 "HTTP/2 201 Created"
+2026-06-23 01:21:39  INFO      db  Inserted chunk 201–300 (100 rows).
+2026-06-23 01:21:39  INFO      httpx  HTTP Request: POST https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?columns=%22text_hash%22%2C%22category%22%2C%22platform_name%22%2C%22rating%22%2C%22scraped_at%22%2C%22original_text%22%2C%22source_url%22%2C%22subject%22%2C%22author%22%2C%22sentiment%22 "HTTP/2 201 Created"
+2026-06-23 01:21:39  INFO      db  Inserted chunk 301–400 (100 rows).
+2026-06-23 01:21:40  INFO      httpx  HTTP Request: POST https://ythxqweylwxtghefjlxi.supabase.co/rest/v1/reviews?columns=%22text_hash%22%2C%22category%22%2C%22platform_name%22%2C%22rating%22%2C%22scraped_at%22%2C%22original_text%22%2C%22source_url%22%2C%22subject%22%2C%22author%22%2C%22sentiment%22 "HTTP/2 201 Created"
+2026-06-23 01:21:40  INFO      db  Inserted chunk 401–440 (40 rows).
+2026-06-23 01:21:40  INFO      db  Total inserted: 440 / 440 new reviews.
+2026-06-23 01:21:40  INFO      pipeline  ============================================================
+2026-06-23 01:21:40  INFO      pipeline  Pipeline complete — 1850 scraped, 440 inserted, 219.5s elapsed.
+2026-06-23 01:21:40  INFO      pipeline  ============================================================
+2026-06-23 01:21:40 - Cron scrape job completed.

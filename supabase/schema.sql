@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     rating          SMALLINT                     -- Platform rating 1-5 (optional)
                     CHECK (rating IS NULL OR (rating >= 1 AND rating <= 5)),
     source_url      TEXT,                        -- Original review URL
+    subject         VARCHAR(255),                -- Review title or topic/subject (optional)
+    text_hash       VARCHAR(64),                 -- SHA-256 hash for deduplication
     is_read         BOOLEAN NOT NULL DEFAULT false, -- Read status for dashboard
     scraped_at      TIMESTAMPTZ NOT NULL DEFAULT now(), -- When the review was scraped
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()  -- Row creation timestamp
@@ -40,13 +42,13 @@ CREATE INDEX IF NOT EXISTS idx_reviews_sentiment ON reviews (sentiment);
 CREATE INDEX IF NOT EXISTS idx_reviews_category ON reviews (category);
 
 -- Sort/filter by date (most common query pattern)
-CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_scraped_at ON reviews (scraped_at DESC);
 
 -- Filter unread reviews
 CREATE INDEX IF NOT EXISTS idx_reviews_is_read ON reviews (is_read) WHERE is_read = false;
 
 -- Composite index for dashboard's most common query pattern
-CREATE INDEX IF NOT EXISTS idx_reviews_platform_date ON reviews (platform_name, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_platform_scraped_at ON reviews (platform_name, scraped_at DESC);
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)

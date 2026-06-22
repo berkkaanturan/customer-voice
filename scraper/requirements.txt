@@ -1,0 +1,7 @@
+google-play-scraper
+app-store-scraper
+requests
+beautifulsoup4
+google-genai
+supabase
+python-dotenv
