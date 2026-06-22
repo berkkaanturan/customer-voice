@@ -65,7 +65,7 @@ export default function KpiCards({ kpi, loading }: KpiCardsProps) {
               ) : (
                 <div className="flex items-baseline overflow-hidden">
                   {card.isText ? (
-                    <p className={`text-sm font-bold ${card.color} tracking-tight font-sans truncate`} title={card.value}>
+                    <p className={`text-sm font-bold ${card.color} tracking-tight font-sans truncate`} title={String(card.value)}>
                       {card.value}
                       <span className="text-[10px] font-normal text-text-muted ml-1">
                         {card.suffix}
