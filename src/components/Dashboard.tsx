@@ -6,7 +6,7 @@ import FilterBar from "./FilterBar";
 import KpiCards from "./KpiCards";
 import ReviewTable from "./ReviewTable";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { CaretLeft, CaretRight, ChartBar } from "@phosphor-icons/react";
 
 // Recharts must be loaded client-side only (uses DOM/window)
@@ -57,7 +57,7 @@ interface ApiResponse {
 }
 
 // Stagger animation definitions
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -68,7 +68,7 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 15 },
   show: {
     opacity: 1,
