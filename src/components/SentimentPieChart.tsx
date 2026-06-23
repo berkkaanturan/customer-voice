@@ -1,120 +1,89 @@
 "use client";
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { SentimentDist } from "./Dashboard";
-import type { PieLabelRenderProps } from "recharts";
-
-const COLORS: Record<string, string> = {
-  Pozitif: "#16a34a", // Emerald-600
-  Negatif: "#dc2626", // Red-600
-  Nötr: "#d97706",    // Amber-600
-};
 
 interface Props {
   data: SentimentDist;
 }
 
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = (props: PieLabelRenderProps) => {
-  const cx = Number(props.cx ?? 0);
-  const cy = Number(props.cy ?? 0);
-  const midAngle = Number(props.midAngle ?? 0);
-  const innerRadius = Number(props.innerRadius ?? 0);
-  const outerRadius = Number(props.outerRadius ?? 0);
-  const percent = Number(props.percent ?? 0);
-
-  if (percent < 0.05) return null;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="white"
-      textAnchor="middle"
-      dominantBaseline="central"
-      className="text-[11px] font-bold font-mono"
-    >
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
-
 export default function SentimentPieChart({ data }: Props) {
-  const chartData = [
-    { name: "Pozitif", value: data.Positive },
-    { name: "Negatif", value: data.Negative },
-    { name: "Nötr", value: data.Neutral },
-  ].filter((d) => d.value > 0);
-
-  const total = chartData.reduce((sum, d) => sum + d.value, 0);
+  const total = data.Positive + data.Negative;
 
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[260px] text-text-muted text-xs">
+      <div className="flex flex-col items-center justify-center h-full text-on-surface-variant text-xs">
         Analiz edilecek veri yok
       </div>
     );
   }
 
+  const negPercent = Math.round((data.Negative / total) * 100);
+  const posPercent = 100 - negPercent;
+
+  const chartData = [
+    { name: "Pozitif", value: data.Positive, percent: posPercent, color: "#10B981" },
+    { name: "Negatif", value: data.Negative, percent: negPercent, color: "#EF4444" },
+  ];
+
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={renderCustomizedLabel}
-          outerRadius={100}
-          innerRadius={60}
-          paddingAngle={3}
-          dataKey="value"
-          animationBegin={0}
-          animationDuration={600}
-          animationEasing="ease-out"
-          stroke="none"
-        >
-          {chartData.map((entry) => (
-            <Cell
-              key={entry.name}
-              fill={COLORS[entry.name]}
+    <div className="flex flex-col items-center justify-between w-full h-full pt-4 relative">
+      <div className="w-full h-48 relative flex items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              paddingAngle={3}
+              dataKey="value"
+              animationBegin={0}
+              animationDuration={500}
+              stroke="none"
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                background: "rgba(255, 255, 255, 0.98)",
+                border: "1px solid rgba(226, 232, 240, 0.8)",
+                borderRadius: "12px",
+                padding: "8px 12px",
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+              }}
+              itemStyle={{ fontSize: "12px", fontWeight: "600", fontFamily: "Inter, sans-serif" }}
+              formatter={(value: any, name: any, props: any) => {
+                const percent = props.payload.percent;
+                return [`${value} yorum (${percent}%)`, name];
+              }}
             />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{
-            background: "rgba(255, 255, 255, 0.98)",
-            border: "1px solid rgba(226, 232, 240, 0.8)",
-            borderRadius: "16px",
-            padding: "10px 14px",
-            boxShadow: "0 20px 40px -15px rgba(15, 23, 42, 0.08)",
-          }}
-          itemStyle={{ color: "#0f172a", fontSize: "12px", fontFamily: "var(--font-sans)" }}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          formatter={(value: any, name: any) => [
-            `${value} yorum (${total > 0 ? ((Number(value) / total) * 100).toFixed(1) : 0}%)`,
-            String(name),
-          ]}
-        />
-        <Legend
-          verticalAlign="bottom"
-          iconType="circle"
-          iconSize={6}
-          formatter={(value: string) => (
-            <span className="text-[11px] font-semibold text-text-muted px-1">{value}</span>
-          )}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+          </PieChart>
+        </ResponsiveContainer>
+        
+        {/* Absolute Center Text */}
+        <div className="absolute flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-[28px] font-bold text-[#220053] leading-none">{posPercent}%</span>
+          <span className="text-xs text-on-surface-variant font-medium mt-1">Pozitif</span>
+        </div>
+      </div>
+
+      {/* Legend separator */}
+      <div className="w-full border-t border-outline-variant/30 mt-6 pt-4 flex items-center justify-center gap-6">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+          <span className="text-xs font-semibold text-on-surface-variant">Pozitif</span>
+          <span className="text-sm font-bold text-[#220053]">{posPercent}%</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+          <span className="text-xs font-semibold text-on-surface-variant">Negatif</span>
+          <span className="text-sm font-bold text-[#220053]">{negPercent}%</span>
+        </div>
+      </div>
+    </div>
   );
 }

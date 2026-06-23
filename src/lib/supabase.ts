@@ -11,11 +11,12 @@ export interface Review {
   platform_name: string;
   author: string | null;
   original_text: string;
-  sentiment: "Positive" | "Negative" | "Neutral";
+  sentiment: "Positive" | "Negative";
   category: string;
   rating: number | null;
   source_url: string | null;
   subject: string | null;
+  keywords: string[] | null;
   is_read: boolean;
   scraped_at: string;
   created_at: string;

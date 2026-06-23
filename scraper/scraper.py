@@ -92,7 +92,7 @@ def scrape_play_store(app_id: str, count: int = 500) -> list[ReviewRecord]:
                                 "rating": r.get("score"),
                                 "source_url": f"https://play.google.com/store/apps/details?id={app_id}",
                                 "scraped_at": (
-                                    r["at"].astimezone(timezone.utc).isoformat() if isinstance(r.get("at"), datetime) else datetime.now(tz=timezone.utc).isoformat()
+                                    r["at"].replace(tzinfo=timezone.utc).isoformat() if isinstance(r.get("at"), datetime) else datetime.now(tz=timezone.utc).isoformat()
                                 ),
                             }
                         )

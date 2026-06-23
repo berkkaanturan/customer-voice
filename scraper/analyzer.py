@@ -117,6 +117,26 @@ NEGATIVE_KEYWORDS = [
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+def extract_keywords(text: str, max_keywords: int = 2) -> list[str]:
+    """Extract the top N most relevant domain-specific keywords from review text."""
+    if not text or not text.strip():
+        return []
+    
+    text_lower = text.lower()
+    
+    # Flatten all category keywords into a scored dict
+    found: dict[str, int] = {}
+    for keywords in CATEGORIES_KEYWORDS.values():
+        for kw in keywords:
+            count = text_lower.count(kw)
+            if count > 0 and len(kw) > 2:  # Skip very short keywords
+                found[kw] = found.get(kw, 0) + count
+    
+    # Sort by frequency descending, take top N
+    sorted_kws = sorted(found.items(), key=lambda x: (-x[1], -len(x[0])))
+    return [kw for kw, _ in sorted_kws[:max_keywords]]
+
+
 def analyze_review(text: str, rating: int | None = None, max_retries: int = 3) -> dict[str, str]:
     """Analyse a single review text using rules and keyword matching.
 
@@ -126,10 +146,10 @@ def analyze_review(text: str, rating: int | None = None, max_retries: int = 3) -
         max_retries: Kept for backwards compatibility but unused.
 
     Returns:
-        Dict with "sentiment" and "category" keys.
+        Dict with "sentiment", "category", and "keywords" keys.
     """
     if not text or not text.strip():
-        return {"sentiment": "Neutral", "category": "Genel"}
+        return {"sentiment": "Negative", "category": "Genel", "keywords": []}
 
     text_lower = text.lower()
 
@@ -157,7 +177,7 @@ def analyze_review(text: str, rating: int | None = None, max_retries: int = 3) -
         elif rating <= 2:
             sentiment = "Negative"
         else:
-            sentiment = "Neutral"
+            sentiment = "Negative"
     else:
         # Fallback to keyword-based score
         pos_score = sum(text_lower.count(kw) for kw in POSITIVE_KEYWORDS)
@@ -168,9 +188,9 @@ def analyze_review(text: str, rating: int | None = None, max_retries: int = 3) -
         elif pos_score > neg_score:
             sentiment = "Positive"
         else:
-            sentiment = "Neutral"
+            sentiment = "Negative"
 
-    return {"sentiment": sentiment, "category": best_category}
+    return {"sentiment": sentiment, "category": best_category, "keywords": extract_keywords(text)}
 
 
 def analyze_reviews_batch(
@@ -190,6 +210,7 @@ def analyze_reviews_batch(
         result = analyze_review(text, rating=rating)
         review["sentiment"] = result["sentiment"]
         review["category"] = result["category"]
+        review["keywords"] = result["keywords"]
 
         if idx % 10 == 0 or idx == total:
             logger.info("Analysed %d / %d reviews.", idx, total)

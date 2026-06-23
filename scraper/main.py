@@ -29,7 +29,7 @@ from config import (
     SENTIMENTS,
     SIKAYETVAR_BRAND,
 )
-from db import save_reviews
+from db import save_reviews, get_latest_review_date, clear_all_reviews
 from scraper import (
     discover_eksi_topics,
     scrape_app_store,
@@ -78,6 +78,42 @@ def save_state(state: dict[str, Any]) -> None:
 # Full pipeline
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def filter_reviews_by_date(reviews: list[dict[str, Any]], platform: str) -> list[dict[str, Any]]:
+    """Filter scraped reviews to only keep new ones or the last 3 months on the first run."""
+    latest_date_str = get_latest_review_date(platform)
+    now = datetime.now(timezone.utc)
+
+    if latest_date_str:
+        latest_date = datetime.fromisoformat(latest_date_str.replace("Z", "+00:00"))
+        logger.info("%s: Incremental scrape. Filtering reviews newer than %s", platform, latest_date_str)
+        filtered = []
+        for r in reviews:
+            r_date_str = r.get("scraped_at")
+            if r_date_str:
+                try:
+                    r_date = datetime.fromisoformat(r_date_str.replace("Z", "+00:00"))
+                    if r_date > latest_date:
+                        filtered.append(r)
+                except Exception as e:
+                    logger.warning("Failed to parse scraped_at date '%s': %s", r_date_str, e)
+        return filtered
+    else:
+        # First scrape: keep only reviews from the last 3 months (90 days)
+        three_months_ago = now - timedelta(days=90)
+        logger.info("%s: Initial scrape. Filtering reviews from the last 3 months (newer than %s)", platform, three_months_ago.isoformat())
+        filtered = []
+        for r in reviews:
+            r_date_str = r.get("scraped_at")
+            if r_date_str:
+                try:
+                    r_date = datetime.fromisoformat(r_date_str.replace("Z", "+00:00"))
+                    if r_date >= three_months_ago:
+                        filtered.append(r)
+                except Exception as e:
+                    logger.warning("Failed to parse scraped_at date '%s': %s", r_date_str, e)
+        return filtered
+
+
 def run_pipeline(cron_mode: bool = False, backfill_mode: bool = False) -> None:
     """Execute the full scrape → analyse → save pipeline for all platforms."""
     start = time.monotonic()
@@ -113,25 +149,29 @@ def run_pipeline(cron_mode: bool = False, backfill_mode: bool = False) -> None:
         eksi_pages = None
 
     play_reviews = scrape_play_store(PLAY_STORE_APP_ID, count=play_count)
+    play_reviews = filter_reviews_by_date(play_reviews, "Play Store")
     all_reviews.extend(play_reviews)
-    logger.info("Play Store: %d reviews", len(play_reviews))
+    logger.info("Play Store: %d new reviews fetched", len(play_reviews))
 
     appstore_reviews = scrape_app_store(
         APP_STORE_APP_NAME, country=APP_STORE_COUNTRY, count=appstore_count
     )
+    appstore_reviews = filter_reviews_by_date(appstore_reviews, "App Store")
     all_reviews.extend(appstore_reviews)
-    logger.info("App Store: %d reviews", len(appstore_reviews))
+    logger.info("App Store: %d new reviews fetched", len(appstore_reviews))
 
     sikayetvar_reviews = scrape_sikayetvar(SIKAYETVAR_BRAND, page_count=sikayetvar_pages, start_page=sv_start_page)
+    sikayetvar_reviews = filter_reviews_by_date(sikayetvar_reviews, "Şikayetvar")
     all_reviews.extend(sikayetvar_reviews)
-    logger.info("Şikayetvar: %d reviews (from page %d)", len(sikayetvar_reviews), sv_start_page)
+    logger.info("Şikayetvar: %d new reviews fetched (from page %d)", len(sikayetvar_reviews), sv_start_page)
 
     eksi_topics = discover_eksi_topics("turknet", limit=35)
     for topic in eksi_topics:
         logger.info("Ekşi Sözlük: fetching topic '%s'…", topic)
         eksi_reviews = scrape_eksisozluk(topic, page_count=eksi_pages)
+        eksi_reviews = filter_reviews_by_date(eksi_reviews, "Ekşi Sözlük")
         all_reviews.extend(eksi_reviews)
-        logger.info("Ekşi Sözlük ('%s'): %d reviews", topic, len(eksi_reviews))
+        logger.info("Ekşi Sözlük ('%s'): %d new reviews fetched", topic, len(eksi_reviews))
 
     logger.info("Total scraped: %d reviews across all platforms.", len(all_reviews))
 
@@ -239,14 +279,14 @@ _SEED_REVIEWS: list[dict[str, Any]] = [
     {"text": "3 yıldır TürkNet müşterisiyim, genel olarak çok memnunum. Ara sıra küçük aksaklıklar oluyor ama hızlı çözülüyor.", "sentiment": "Positive", "category": "Genel", "platform": "Play Store", "rating": 4},
     {"text": "TürkNet'e geçmek en doğru kararımdı. Hem ucuz hem kaliteli. Ailecek mutluyuz.", "sentiment": "Positive", "category": "Genel", "platform": "App Store", "rating": 5},
 
-    # ── Neutral ───────────────────────────────────────────────────────────────
-    {"text": "TürkNet ortalama bir servis sunuyor. Ne çok iyi ne çok kötü. Fiyatı makul, hız idare eder.", "sentiment": "Neutral", "category": "Genel", "platform": "Ekşi Sözlük", "rating": None},
-    {"text": "Bir yıldır TürkNet kullanıyorum. Büyük sorun yaşamadım ama etkileyici bir şey de yok. Normal.", "sentiment": "Neutral", "category": "Genel", "platform": "Play Store", "rating": 3},
-    {"text": "Hızlar fena değil ama mükemmel de değil. Fiyatı uygun olduğu için devam ediyorum.", "sentiment": "Neutral", "category": "Hız", "platform": "App Store", "rating": 3},
-    {"text": "Modem fena değil aslında, WiFi menzili ortalama. Çok büyük evlerde sorun olabilir ama bizim ev için yeterli.", "sentiment": "Neutral", "category": "Modem/Cihaz", "platform": "Play Store", "rating": 3},
-    {"text": "Fatura sistemi karışık ama sorduğunuzda açıklıyorlar. Online işlemler biraz geliştirilmeli.", "sentiment": "Neutral", "category": "Fatura", "platform": "App Store", "rating": 3},
-    {"text": "Altyapı çalışması sırasında 1 gün internet kesildi ama önceden bilgilendirdiler. Kabul edilebilir.", "sentiment": "Neutral", "category": "Altyapı", "platform": "Ekşi Sözlük", "rating": None},
-    {"text": "Kurulum süreci normal sürdü, 1 hafta içinde bağlandık. Hızlı değildi ama çok da yavaş değildi.", "sentiment": "Neutral", "category": "Kurulum", "platform": "Şikayetvar", "rating": None},
+    # ── Neutral (Now mapped to Negative) ──────────────────────────────────────
+    {"text": "TürkNet ortalama bir servis sunuyor. Ne çok iyi ne çok kötü. Fiyatı makul, hız idare eder.", "sentiment": "Negative", "category": "Genel", "platform": "Ekşi Sözlük", "rating": None},
+    {"text": "Bir yıldır TürkNet kullanıyorum. Büyük sorun yaşamadım ama etkileyici bir şey de yok. Normal.", "sentiment": "Negative", "category": "Genel", "platform": "Play Store", "rating": 3},
+    {"text": "Hızlar fena değil ama mükemmel de değil. Fiyatı uygun olduğu için devam ediyorum.", "sentiment": "Negative", "category": "Hız", "platform": "App Store", "rating": 3},
+    {"text": "Modem fena değil aslında, WiFi menzili ortalama. Çok büyük evlerde sorun olabilir ama bizim ev için yeterli.", "sentiment": "Negative", "category": "Modem/Cihaz", "platform": "Play Store", "rating": 3},
+    {"text": "Fatura sistemi karışık ama sorduğunuzda açıklıyorlar. Online işlemler biraz geliştirilmeli.", "sentiment": "Negative", "category": "Fatura", "platform": "App Store", "rating": 3},
+    {"text": "Altyapı çalışması sırasında 1 gün internet kesildi ama önceden bilgilendirdiler. Kabul edilebilir.", "sentiment": "Negative", "category": "Altyapı", "platform": "Ekşi Sözlük", "rating": None},
+    {"text": "Kurulum süreci normal sürdü, 1 hafta içinde bağlandık. Hızlı değildi ama çok da yavaş değildi.", "sentiment": "Negative", "category": "Kurulum", "platform": "Şikayetvar", "rating": None},
 
     # ── A few more negatives for realism (heavier negative skew) ──────────────
     {"text": "İnternet 2 gündür yok. Arıza kaydı açtırdım ama tahmini çözüm süresi bile verilmedi.", "sentiment": "Negative", "category": "Altyapı", "platform": "Şikayetvar", "rating": None},
@@ -353,9 +393,16 @@ def main() -> None:
         action="store_true",
         help="Run in backfill mode to fetch historical data iteratively.",
     )
+    parser.add_argument(
+        "--clear",
+        action="store_true",
+        help="Delete all records from the reviews table.",
+    )
     args = parser.parse_args()
 
-    if args.seed:
+    if args.clear:
+        clear_all_reviews()
+    elif args.seed:
         seed_demo_data()
     else:
         run_pipeline(cron_mode=args.cron, backfill_mode=args.backfill)

@@ -1,171 +1,54 @@
 "use client";
 
-import type { Filters } from "./Dashboard";
-import { Funnel, Trash } from "@phosphor-icons/react";
+import { GooglePlayLogo, Megaphone, Quotes, SquaresFour } from "@phosphor-icons/react";
 
 const PLATFORMS = [
-  { value: "all", label: "Tüm Platformlar" },
-  { value: "Play Store", label: "Play Store" },
-  { value: "App Store", label: "App Store" },
+  { value: "all", label: "Tümü" },
   { value: "Şikayetvar", label: "Şikayetvar" },
+  { value: "App Store", label: "App Store" },
+  { value: "Play Store", label: "Play Store" },
   { value: "Ekşi Sözlük", label: "Ekşi Sözlük" },
 ];
 
-const SENTIMENTS = [
-  { value: "all", label: "Tüm Duygular" },
-  { value: "Positive", label: "Pozitif" },
-  { value: "Negative", label: "Negatif" },
-  { value: "Neutral", label: "Nötr" },
-];
+const AppStoreIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 640 640" className="text-blue-600 inline-block align-middle fill-current shrink-0">
+    <path d="m319.9 184.9l9.1-15.7c5.6-9.8 18.1-13.1 27.9-7.5s13.1 18.1 7.5 27.9l-87.5 151.5h63.3c20.5 0 32 24.1 23.1 40.8H177.8c-11.3 0-20.4-9.1-20.4-20.4s9.1-20.4 20.4-20.4h52l66.6-115.4l-20.8-36.1c-5.6-9.8-2.3-22.2 7.5-27.9c9.8-5.6 22.2-2.3 27.9 7.5zm-78.7 218l-19.6 34c-5.6 9.8-18.1 13.1-27.9 7.5s-13.1-18.1-7.5-27.9l14.6-25.2c16.4-5.1 29.8-1.2 40.4 11.6m168.9-61.7h53.1c11.3 0 20.4 9.1 20.4 20.4s-9.1 20.4-20.4 20.4h-29.5l19.9 34.5c5.6 9.8 2.3 22.2-7.5 27.9c-9.8 5.6-22.2 2.3-27.9-7.5c-33.5-58.1-58.7-101.6-75.4-130.6c-17.1-29.5-4.9-59.1 7.2-69.1c13.4 23 33.4 57.7 60.1 104M320 72C183 72 72 183 72 320s111 248 248 248s248-111 248-248S457 72 320 72M104 320c0-119.3 96.7-216 216-216s216 96.7 216 216s-96.7 216-216 216s-216-96.7-216-216" />
+  </svg>
+);
 
-const CATEGORIES = [
-  { value: "all", label: "Tüm Konular" },
-  { value: "Abonelik", label: "Abonelik" },
-  { value: "Adres Değişikliği", label: "Adres Değişikliği" },
-  { value: "ADSL", label: "ADSL" },
-  { value: "Altyapı", label: "Altyapı" },
-  { value: "Altyapısız İnternet", label: "Altyapısız İnternet" },
-  { value: "Arıza", label: "Arıza" },
-  { value: "Bakım Çalışması", label: "Bakım Çalışması" },
-  { value: "Dondurma İşlemi", label: "Dondurma İşlemi" },
-  { value: "Ev Telefonu Hizmeti", label: "Ev Telefonu Hizmeti" },
-  { value: "Evde İnternet", label: "Evde İnternet" },
-  { value: "Fatura", label: "Fatura" },
-  { value: "Fiber İnternet", label: "Fiber İnternet" },
-  { value: "Gezgin İnternet", label: "Gezgin İnternet" },
-  { value: "Gigafiber", label: "Gigafiber" },
-  { value: "Hız Testi", label: "Hız Testi" },
-  { value: "İnternet Kesintisi", label: "İnternet Kesintisi" },
-  { value: "İnternet Paketleri", label: "İnternet Paketleri" },
-  { value: "Modem", label: "Modem" },
-  { value: "Online İşlemler", label: "Online İşlemler" },
-  { value: "Ping Sorunu", label: "Ping Sorunu" },
-  { value: "VDSL", label: "VDSL" },
-  { value: "Yalın İnternet", label: "Yalın İnternet" },
-  { value: "Genel", label: "Genel" }
-];
+const PLATFORM_ICONS: Record<string, React.ReactNode> = {
+  all: <SquaresFour size={14} weight="regular" className="text-slate-500" />,
+  "Şikayetvar": <Megaphone size={14} weight="regular" className="text-blue-600" />,
+  "App Store": <AppStoreIcon />,
+  "Play Store": <GooglePlayLogo size={14} weight="regular" className="text-emerald-600" />,
+  "Ekşi Sözlük": <Quotes size={14} weight="regular" className="text-orange-600" />,
+};
 
 interface FilterBarProps {
-  filters: Filters;
-  onChange: (filters: Filters) => void;
+  platform: string;
+  onChange: (platform: string) => void;
 }
 
-export default function FilterBar({ filters, onChange }: FilterBarProps) {
-  const handleChange = (key: keyof Filters, value: string) => {
-    onChange({ ...filters, [key]: value });
-  };
-
-  const handleReset = () => {
-    onChange({ platform: "all", sentiment: "all", category: "all", dateFrom: "", dateTo: "" });
-  };
-
-  const hasActiveFilters =
-    filters.platform !== "all" ||
-    filters.sentiment !== "all" ||
-    filters.category !== "all" ||
-    filters.dateFrom !== "" ||
-    filters.dateTo !== "";
-
+export default function FilterBar({ platform, onChange }: FilterBarProps) {
   return (
-    <div className="bento-card p-8 flex flex-col gap-6">
-      <div className="flex items-center gap-2 text-text-muted">
-        <Funnel size={18} weight="regular" className="text-brand-accent" />
-        <h2 className="text-[10px] font-semibold tracking-wider uppercase">Filtreleme Seçenekleri</h2>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 items-end">
-        {/* Platform filter */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Platform
-          </label>
-          <select
-            value={filters.platform}
-            onChange={(e) => handleChange("platform", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200/80 text-brand-primary text-xs py-3 px-4 rounded-2xl focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition-all appearance-none cursor-pointer"
-          >
-            {PLATFORMS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Category filter */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Şikayet Konusu
-          </label>
-          <select
-            value={filters.category}
-            onChange={(e) => handleChange("category", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200/80 text-brand-primary text-xs py-3 px-4 rounded-2xl focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition-all appearance-none cursor-pointer"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Sentiment filter */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Duygu Durumu
-          </label>
-          <select
-            value={filters.sentiment}
-            onChange={(e) => handleChange("sentiment", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200/80 text-brand-primary text-xs py-3 px-4 rounded-2xl focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition-all appearance-none cursor-pointer"
-          >
-            {SENTIMENTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Date from */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Başlangıç Tarihi
-          </label>
-          <input
-            type="date"
-            value={filters.dateFrom}
-            onChange={(e) => handleChange("dateFrom", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200/80 text-brand-primary text-xs py-3 px-4 rounded-2xl focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition-all cursor-text"
-          />
-        </div>
-
-        {/* Date to */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-            Bitiş Tarihi
-          </label>
-          <input
-            type="date"
-            value={filters.dateTo}
-            onChange={(e) => handleChange("dateTo", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200/80 text-brand-primary text-xs py-3 px-4 rounded-2xl focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition-all cursor-text"
-          />
-        </div>
-      </div>
-
-      {hasActiveFilters && (
-        <div className="flex justify-end pt-2 border-t border-slate-100">
+    <div className="hidden md:flex items-center bg-surface-container-low rounded-lg p-1 border border-outline-variant/10">
+      {PLATFORMS.map((p) => {
+        const isActive = platform === p.value;
+        return (
           <button
-            onClick={handleReset}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-2xl border border-slate-200 text-text-muted hover:text-sentiment-neg hover:border-sentiment-neg/20 hover:bg-red-50 transition-all cursor-pointer"
+            key={p.value}
+            onClick={() => onChange(p.value)}
+            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+              isActive
+                ? "bg-white shadow-xs text-[#220053] font-bold"
+                : "text-[#4a4452] hover:text-[#220053]"
+            }`}
           >
-            <Trash size={14} />
-            Filtreleri Temizle
+            {PLATFORM_ICONS[p.value]}
+            <span>{p.label}</span>
           </button>
-        </div>
-      )}
+        );
+      })}
     </div>
   );
 }

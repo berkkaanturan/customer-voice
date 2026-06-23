@@ -12,6 +12,7 @@ import {
   ComposedChart,
   Legend,
 } from "recharts";
+import { useState } from "react";
 import type { TrendPoint } from "./Dashboard";
 
 interface Props {
@@ -19,6 +20,8 @@ interface Props {
 }
 
 export default function TrendLineChart({ data }: Props) {
+  const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
+
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[260px] text-text-muted text-xs">
@@ -72,7 +75,6 @@ export default function TrendLineChart({ data }: Props) {
               total: "Toplam",
               positive: "Pozitif",
               negative: "Negatif",
-              neutral: "Nötr",
             };
             return [value, nameMap[String(name)] || name];
           }}
@@ -83,13 +85,14 @@ export default function TrendLineChart({ data }: Props) {
           iconType="circle"
           iconSize={6}
           wrapperStyle={{ fontSize: "10px", fontWeight: 600, paddingBottom: "12px", fontFamily: "var(--font-sans)" }}
+          onMouseEnter={(o) => setHoveredSeries(o.dataKey as string)}
+          onMouseLeave={() => setHoveredSeries(null)}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter={(value: any) => {
             const nameMap: Record<string, string> = {
               total: "Toplam Yorum",
               positive: "Pozitif",
               negative: "Negatif",
-              neutral: "Nötr",
             };
             return (
               <span className="text-text-muted px-1">{nameMap[value] || value}</span>
@@ -101,12 +104,15 @@ export default function TrendLineChart({ data }: Props) {
           dataKey="total"
           fill="url(#totalGradient)"
           stroke="none"
+          legendType="none"
+          fillOpacity={hoveredSeries === null || hoveredSeries === "total" ? 1 : 0.15}
         />
         <Line
           type="monotone"
           dataKey="total"
           stroke="#2563eb"
-          strokeWidth={2}
+          strokeWidth={hoveredSeries === "total" ? 3 : 2}
+          strokeOpacity={hoveredSeries === null || hoveredSeries === "total" ? 1 : 0.15}
           dot={false}
           activeDot={{ r: 4, fill: "#2563eb", stroke: "#ffffff", strokeWidth: 2 }}
           animationDuration={600}
@@ -115,7 +121,8 @@ export default function TrendLineChart({ data }: Props) {
           type="monotone"
           dataKey="positive"
           stroke="#16a34a"
-          strokeWidth={1.5}
+          strokeWidth={hoveredSeries === "positive" ? 2.5 : 1.5}
+          strokeOpacity={hoveredSeries === null || hoveredSeries === "positive" ? 1 : 0.15}
           dot={false}
           strokeDasharray="4 4"
           animationDuration={800}
@@ -124,20 +131,11 @@ export default function TrendLineChart({ data }: Props) {
           type="monotone"
           dataKey="negative"
           stroke="#dc2626"
-          strokeWidth={1.5}
+          strokeWidth={hoveredSeries === "negative" ? 2.5 : 1.5}
+          strokeOpacity={hoveredSeries === null || hoveredSeries === "negative" ? 1 : 0.15}
           dot={false}
           strokeDasharray="4 4"
           animationDuration={800}
-        />
-        <Line
-          type="monotone"
-          dataKey="neutral"
-          stroke="#d97706"
-          strokeWidth={1}
-          dot={false}
-          strokeDasharray="2 4"
-          animationDuration={800}
-          opacity={0.7}
         />
       </ComposedChart>
     </ResponsiveContainer>

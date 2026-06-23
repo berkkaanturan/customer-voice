@@ -117,11 +117,12 @@ def save_reviews(reviews: list[dict[str, Any]]) -> int:
             "author": review.get("author", "Anonim"),
             "original_text": text,
             "text_hash": h,
-            "sentiment": review.get("sentiment", "Neutral"),
+            "sentiment": review.get("sentiment", "Negative"),
             "category": review.get("category", "Genel"),
             "rating": review.get("rating"),
             "source_url": review.get("source_url"),
             "subject": review.get("subject"),
+            "keywords": review.get("keywords", []),
         }
 
         # If a specific scraped_at timestamp was provided, use it;
@@ -157,6 +158,19 @@ def save_reviews(reviews: list[dict[str, Any]]) -> int:
 
     logger.info("Total inserted: %d / %d new reviews.", inserted, len(rows_to_insert))
     return inserted
+
+
+def clear_all_reviews() -> bool:
+    """Delete all rows from the reviews table."""
+    client = get_supabase_client()
+    try:
+        # Delete all records using a tautology on UUID id
+        client.table(TABLE_NAME).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        logger.info("Successfully cleared all reviews from Supabase.")
+        return True
+    except Exception as exc:
+        logger.error("Failed to clear reviews table: %s", exc)
+        return False
 
 
 def get_latest_review_date(platform: str) -> str | None:

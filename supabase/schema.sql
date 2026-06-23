@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     platform_name   VARCHAR(50) NOT NULL,       -- 'Şikayetvar', 'Play Store', 'App Store', 'Ekşi Sözlük'
     author          VARCHAR(255),                -- Review author name (optional)
     original_text   TEXT NOT NULL,               -- Original review text
-    sentiment       VARCHAR(20) NOT NULL         -- 'Positive', 'Negative', 'Neutral'
+    sentiment       VARCHAR(20) NOT NULL         -- 'Positive', 'Negative'
                     CHECK (sentiment IN ('Positive', 'Negative', 'Neutral')),
     category        VARCHAR(100) NOT NULL,       -- AI-determined category
     rating          SMALLINT                     -- Platform rating 1-5 (optional)
@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     source_url      TEXT,                        -- Original review URL
     subject         VARCHAR(255),                -- Review title or topic/subject (optional)
     text_hash       VARCHAR(64),                 -- SHA-256 hash for deduplication
+    keywords        TEXT[] DEFAULT '{}',         -- Extracted domain-specific keywords
     is_read         BOOLEAN NOT NULL DEFAULT false, -- Read status for dashboard
     scraped_at      TIMESTAMPTZ NOT NULL DEFAULT now(), -- When the review was scraped
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()  -- Row creation timestamp
