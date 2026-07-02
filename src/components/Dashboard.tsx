@@ -324,38 +324,40 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background-alt text-on-surface" style={{ fontFamily: "Inter, sans-serif" }}>
       {/* ── TopNavBar ── */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-8 w-full h-16 bg-white border-b border-outline-variant/30 shadow-xs">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center">
-            <img src="/turknet_logo.png" className="h-6 w-auto shrink-0" alt="TurkNet Logo" />
-            <span className="font-bold text-[#220053] text-xl tracking-tight flex items-center">
-              <span className="text-[#220053] font-bold ml-6 border-l-2 border-outline-variant/50 pl-6 h-6 flex items-center select-none">VoC Hub</span>
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-8 w-full h-16 bg-white border-b border-outline-variant/30 shadow-xs">
+        <div className="flex flex-row items-center justify-between gap-3 md:gap-8 w-full md:w-auto">
+          <div className="flex items-center shrink-0">
+            <img src="/turknet_logo.png" className="h-5 md:h-6 w-auto shrink-0" alt="TurkNet Logo" />
+            <span className="font-bold text-[#220053] text-lg md:text-xl tracking-tight flex items-center">
+              <span className="text-[#220053] font-bold ml-4 md:ml-6 border-l-2 border-outline-variant/50 pl-4 md:pl-6 h-5 md:h-6 flex items-center select-none">VoC Hub</span>
             </span>
           </div>
-          <FilterBar platform={globalFilters.platform} onChange={(plat) => {
-            setPage(1);
-            setGlobalFilters(prev => ({ ...prev, platform: plat }));
-          }} />
+          <div className="md:w-auto shrink-0">
+            <FilterBar platform={globalFilters.platform} onChange={(plat) => {
+              setPage(1);
+              setGlobalFilters(prev => ({ ...prev, platform: plat }));
+            }} />
+          </div>
         </div>
       </nav>
 
-      <main className="p-8 max-w-[1600px] mx-auto space-y-6">
+      <main className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-2xl border border-outline-variant/10 shadow-xs">
+        <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 bg-white p-4 md:p-6 rounded-2xl border border-outline-variant/10 shadow-xs">
           <div className="flex items-center">
-            <h1 className="text-[28px] font-bold text-[#220053] tracking-tight leading-none">Voice of Customer Genel Bakış</h1>
+            <h1 className="text-2xl md:text-[28px] font-bold text-[#220053] tracking-tight leading-none">Voice of Customer Genel Bakış</h1>
           </div>
 
           {/* Date Selector Controls */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full lg:w-auto">
             {/* Active Range Button */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-outline-variant rounded-xl text-xs font-bold text-on-surface select-none">
+            <div className="flex items-center justify-center md:justify-start gap-2 px-4 py-2 bg-white border border-outline-variant rounded-xl text-xs font-bold text-on-surface select-none">
               <span className="material-symbols-outlined text-[18px]">calendar_month</span>
               <span>{activePreset === "all" ? "Tüm Zamanlar" : activePreset === "30d" ? "Son 30 Gün" : activePreset === "60d" ? "Son 60 Gün" : activePreset === "90d" ? "Son 90 Gün" : activePreset === "1y" ? "Son 1 Yıl" : "Özel Aralık"}</span>
             </div>
 
             {/* Quick Presets */}
-            <div className="flex items-center bg-surface-container-low p-1 rounded-lg border border-outline-variant/10">
+            <div className="flex overflow-x-auto items-center bg-surface-container-low p-1 rounded-lg border border-outline-variant/10 [&::-webkit-scrollbar]:hidden">
               {[
                 { label: "30 Gün", value: "30d" },
                 { label: "60 Gün", value: "60d" },
@@ -366,7 +368,7 @@ export default function Dashboard() {
                 <button
                   key={preset.value}
                   onClick={() => handlePresetChange(preset.value)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer whitespace-nowrap ${
                     activePreset === preset.value
                       ? "bg-white text-secondary shadow-xs"
                       : "text-on-surface-variant hover:text-primary"
@@ -378,7 +380,7 @@ export default function Dashboard() {
             </div>
 
             {/* Custom Range Inputs */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between md:justify-start gap-2 w-full md:w-auto">
               <input
                 type="date"
                 value={globalFilters.dateFrom}
@@ -387,9 +389,9 @@ export default function Dashboard() {
                   setPage(1);
                   setGlobalFilters(prev => ({ ...prev, dateFrom: e.target.value }));
                 }}
-                className="bg-white border border-outline-variant text-xs px-2 py-1.5 rounded-lg text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-secondary/20 cursor-pointer"
+                className="flex-1 md:flex-none bg-white border border-outline-variant text-xs px-2 py-1.5 rounded-lg text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-secondary/20 cursor-pointer min-w-0"
               />
-              <span className="text-xs text-on-surface-variant font-medium">ve</span>
+              <span className="text-xs text-on-surface-variant font-medium shrink-0">ve</span>
               <input
                 type="date"
                 value={globalFilters.dateTo}
@@ -398,7 +400,7 @@ export default function Dashboard() {
                   setPage(1);
                   setGlobalFilters(prev => ({ ...prev, dateTo: e.target.value }));
                 }}
-                className="bg-white border border-outline-variant text-xs px-2 py-1.5 rounded-lg text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-secondary/20 cursor-pointer"
+                className="flex-1 md:flex-none bg-white border border-outline-variant text-xs px-2 py-1.5 rounded-lg text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-secondary/20 cursor-pointer min-w-0"
               />
             </div>
           </div>

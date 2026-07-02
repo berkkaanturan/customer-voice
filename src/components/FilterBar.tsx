@@ -1,6 +1,7 @@
 "use client";
 
-import { GooglePlayLogo, Megaphone, Quotes, SquaresFour } from "@phosphor-icons/react";
+import { useState, useRef, useEffect } from "react";
+import { GooglePlayLogo, Megaphone, Quotes, SquaresFour, CaretDown } from "@phosphor-icons/react";
 
 const PLATFORMS = [
   { value: "all", label: "Tümü" },
@@ -30,25 +31,75 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ platform, onChange }: FilterBarProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const activePlatform = PLATFORMS.find(p => p.value === platform) || PLATFORMS[0];
+
   return (
-    <div className="hidden md:flex items-center bg-surface-container-low rounded-lg p-1 border border-outline-variant/10">
-      {PLATFORMS.map((p) => {
-        const isActive = platform === p.value;
-        return (
-          <button
-            key={p.value}
-            onClick={() => onChange(p.value)}
-            className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
-              isActive
-                ? "bg-white shadow-xs text-[#220053] font-bold"
-                : "text-[#4a4452] hover:text-[#220053]"
-            }`}
-          >
-            {PLATFORM_ICONS[p.value]}
-            <span>{p.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <>
+      {/* Mobile Dropdown View */}
+      <div className="relative md:hidden shrink-0" ref={dropdownRef}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-low border border-outline-variant/20 rounded-lg text-xs font-bold text-[#220053] shadow-xs hover:bg-slate-50 transition-colors"
+        >
+          {PLATFORM_ICONS[activePlatform.value]}
+          <span>{activePlatform.label}</span>
+          <CaretDown size={12} weight="bold" className={`text-on-surface-variant transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        {isOpen && (
+          <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-outline-variant/20 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+            {PLATFORMS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => {
+                  onChange(p.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 transition-colors ${
+                  platform === p.value ? "text-[#220053] font-bold bg-slate-50" : "text-on-surface-variant font-medium"
+                }`}
+              >
+                {PLATFORM_ICONS[p.value]}
+                <span>{p.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Pills View */}
+      <div className="hidden md:flex overflow-x-auto items-center bg-surface-container-low rounded-lg p-1 border border-outline-variant/10 w-auto [&::-webkit-scrollbar]:hidden">
+        {PLATFORMS.map((p) => {
+          const isActive = platform === p.value;
+          return (
+            <button
+              key={p.value}
+              onClick={() => onChange(p.value)}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                isActive
+                  ? "bg-white shadow-xs text-[#220053] font-bold"
+                  : "text-[#4a4452] hover:text-[#220053]"
+              }`}
+            >
+              {PLATFORM_ICONS[p.value]}
+              <span>{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 }

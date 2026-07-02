@@ -171,20 +171,20 @@ export default function ReviewTable({
   return (
     <>
       {/* Table Header Bar */}
-      <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-4">
+      <div className="px-4 md:px-6 py-4 border-b border-outline-variant flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4 w-full md:w-auto">
           <h4 className="text-base font-bold text-[#220053]">Son Gelen Yorumlar</h4>
           <div className="bg-[#e6f4ea] text-[#137333] px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 border border-emerald-200/40">
             <span className="w-1.5 h-1.5 rounded-full bg-[#137333] animate-pulse" />
             Bugün Gelen: {todayCount} Yeni Yorum
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1 md:flex-none min-w-[200px]">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-base select-none">search</span>
             <input
-              className="pl-9 pr-4 py-1.5 border border-outline-variant rounded-full text-xs bg-white text-on-surface focus:ring-secondary outline-none w-60 focus:ring-2 focus:ring-secondary/20 transition-all font-medium"
+              className="pl-9 pr-4 py-1.5 border border-outline-variant rounded-full text-xs bg-white text-on-surface focus:ring-secondary outline-none w-full focus:ring-2 focus:ring-secondary/20 transition-all font-medium"
               placeholder="Yorumlarda ara..."
               type="text"
               value={searchQuery}
@@ -194,7 +194,7 @@ export default function ReviewTable({
           {/* Filter button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 border rounded-lg transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-1 text-xs font-semibold px-3 py-1.5 border rounded-lg transition-all cursor-pointer ${
               showFilters
                 ? "bg-[#6b38d4]/10 border-[#6b38d4] text-[#6b38d4]"
                 : "border-outline-variant text-on-surface-variant hover:bg-slate-50"
@@ -206,10 +206,10 @@ export default function ReviewTable({
           {/* Export */}
           <button
             onClick={handleExport}
-            className="bg-[#6b38d4] text-on-secondary px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+            className="bg-[#6b38d4] text-on-secondary px-3 md:px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px] select-none">download</span>
-            Dışa Aktar
+            <span className="hidden sm:inline">Dışa Aktar</span>
           </button>
         </div>
       </div>
