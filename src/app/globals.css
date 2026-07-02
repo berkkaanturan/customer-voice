@@ -197,3 +197,13 @@ body {
 .animate-grow {
   animation: growWidth 0.7s ease-out forwards;
 }
+
+/* Hide HTML5 number input spin arrows */
+.hide-spin-button::-webkit-outer-spin-button,
+.hide-spin-button::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.hide-spin-button {
+  -moz-appearance: textfield;
+}

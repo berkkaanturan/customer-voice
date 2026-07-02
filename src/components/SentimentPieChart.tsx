@@ -29,7 +29,7 @@ export default function SentimentPieChart({ data }: Props) {
   return (
     <div className="flex flex-col items-center justify-between w-full h-full pt-4 relative">
       <div className="w-full h-48 relative flex items-center justify-center">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
           <PieChart>
             <Pie
               data={chartData}
@@ -48,6 +48,7 @@ export default function SentimentPieChart({ data }: Props) {
               ))}
             </Pie>
             <Tooltip
+              wrapperStyle={{ zIndex: 100 }}
               contentStyle={{
                 background: "rgba(255, 255, 255, 0.98)",
                 border: "1px solid rgba(226, 232, 240, 0.8)",
@@ -65,7 +66,7 @@ export default function SentimentPieChart({ data }: Props) {
         </ResponsiveContainer>
         
         {/* Absolute Center Text */}
-        <div className="absolute flex flex-col items-center justify-center pointer-events-none">
+        <div className="absolute flex flex-col items-center justify-center pointer-events-none z-0">
           <span className="text-[28px] font-bold text-[#220053] leading-none">{posPercent}%</span>
           <span className="text-xs text-on-surface-variant font-medium mt-1">Pozitif</span>
         </div>

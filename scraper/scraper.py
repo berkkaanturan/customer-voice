@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import random
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -353,7 +354,7 @@ def scrape_sikayetvar(brand_slug: str, page_count: int = 1, start_page: int = 1)
     Returns:
         List of review dicts.
     """
-    import time
+
 
     categories = {
         "abonelik": "Abonelik",

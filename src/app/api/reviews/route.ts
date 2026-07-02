@@ -77,14 +77,16 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    
     // ── KPI Calculations ──
 
-    // 1. Bugün Gelen Yorum (Turkey timezone)
+    // 1. Prepare all queries
+    
+    // Today
     const turkeyDateStr = new Date().toLocaleDateString("en-US", { timeZone: "Europe/Istanbul" });
     const [month, day, year] = turkeyDateStr.split("/");
     const todayStart = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0));
     todayStart.setUTCHours(todayStart.getUTCHours() - 3);
-
     const todayEnd = new Date(todayStart);
     todayEnd.setDate(todayEnd.getDate() + 1);
 
@@ -99,9 +101,8 @@ export async function GET(request: NextRequest) {
     if (search.trim()) {
       todayQuery = todayQuery.or(`original_text.ilike.%${search}%,subject.ilike.%${search}%`);
     }
-    const { count: todayCount } = await todayQuery;
 
-    // Helper to fetch all rows for specific columns (parallelized to bypass 1000 limit)
+    // All filtered data parallel fetcher
     const fetchAllFilteredFieldsParallel = async (selectStr: string, total: number) => {
       if (total === 0) return [];
       const pageSize = 1000;
@@ -128,34 +129,114 @@ export async function GET(request: NextRequest) {
       }
       return allData;
     };
-
-    // Fetch all filtered review categories, sentiments and dates in parallel
     const totalFiltered = count || 0;
-    const allData = await fetchAllFilteredFieldsParallel("category, sentiment, scraped_at", totalFiltered);
+    const fetchAllPromise = fetchAllFilteredFieldsParallel("category, sentiment, scraped_at", totalFiltered);
 
-    // Treat legacy Neutral reviews as Negative for metrics consistency
+    // Last 24h
+    const last24hStart = new Date();
+    last24hStart.setHours(last24hStart.getHours() - 24);
+    let last24hQuery = supabase
+      .from("reviews")
+      .select("sentiment, category")
+      .gte("scraped_at", last24hStart.toISOString());
+    if (platform !== "all") last24hQuery = last24hQuery.eq("platform_name", platform);
+
+    // Churn
+    const CHURN_KEYWORDS = [
+      "iptal", "tüketici hakem heyeti", "avukat", "mahkeme", "taahhüt",
+      "cayma", "dava", "savcılık", "btk", "şikayet ettim", "hukuki",
+      "ceza", "sözleşme feshi", "ihtarname",
+    ];
+    const churnOrFilter = CHURN_KEYWORDS.map(kw => `original_text.ilike.%${kw}%`).join(",");
+    let churnQuery = supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true });
+    churnQuery = applyFilters(churnQuery);
+    churnQuery = churnQuery.or(churnOrFilter);
+
+    // Trends
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+    let prevStartDate = sixtyDaysAgo.toISOString();
+    let prevEndDate = thirtyDaysAgo.toISOString();
+
+    let current30Promise: any = Promise.resolve({ count: null });
+    let current30ChurnPromise: any = Promise.resolve({ count: null });
+
+    if (dateFrom && dateTo) {
+      const dFrom = new Date(dateFrom);
+      const dTo = new Date(dateTo + "T23:59:59.999Z");
+      const durationMs = dTo.getTime() - dFrom.getTime();
+      prevStartDate = new Date(dFrom.getTime() - durationMs).toISOString();
+      prevEndDate = dFrom.toISOString();
+    } else {
+      let current30Query = supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .gte("scraped_at", thirtyDaysAgo.toISOString());
+      if (platform !== "all") current30Query = current30Query.eq("platform_name", platform);
+      current30Promise = current30Query;
+
+      let current30ChurnQuery = supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .gte("scraped_at", thirtyDaysAgo.toISOString())
+        .or(churnOrFilter);
+      if (platform !== "all") current30ChurnQuery = current30ChurnQuery.eq("platform_name", platform);
+      current30ChurnPromise = current30ChurnQuery;
+    }
+
+    let prevQuery = supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .gte("scraped_at", prevStartDate)
+      .lt("scraped_at", prevEndDate);
+    if (platform !== "all") prevQuery = prevQuery.eq("platform_name", platform);
+
+    let prevChurnQuery = supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .gte("scraped_at", prevStartDate)
+      .lt("scraped_at", prevEndDate)
+      .or(churnOrFilter);
+    if (platform !== "all") prevChurnQuery = prevChurnQuery.eq("platform_name", platform);
+
+    // ── Execute all independent queries in parallel ──
+    const [
+      { count: todayCount },
+      allData,
+      { data: last24hData, error: last24hError },
+      { count: churnCountVal },
+      { count: c30 },
+      { count: c30Churn },
+      { count: prevCountVal },
+      { count: prevChurnCountVal }
+    ] = await Promise.all([
+      todayQuery,
+      fetchAllPromise,
+      last24hQuery,
+      churnQuery,
+      current30Promise,
+      current30ChurnPromise,
+      prevQuery,
+      prevChurnQuery
+    ]);
+
+    // ── Process Results ──
+
+    // 1. allData metrics
     allData.forEach((r: any) => {
-      if (r.sentiment !== "Positive") {
-        r.sentiment = "Negative";
-      }
+      if (r.sentiment !== "Positive") r.sentiment = "Negative";
     });
-
     const positiveCount = allData.filter((r: any) => r.sentiment === "Positive").length;
     const negativeCount = totalFiltered - positiveCount;
-
-    const negativeRatio =
-      totalFiltered > 0
-        ? Math.round((negativeCount / totalFiltered) * 100)
-        : 0;
-
-    const sentimentScore =
-      totalFiltered > 0
-        ? Math.round((positiveCount / totalFiltered) * 100)
-        : 50;
-
+    const negativeRatio = totalFiltered > 0 ? Math.round((negativeCount / totalFiltered) * 100) : 0;
+    const sentimentScore = totalFiltered > 0 ? Math.round((positiveCount / totalFiltered) * 100) : 50;
     const sentimentDist = { Positive: positiveCount, Negative: negativeCount };
 
-    // Category distribution
     const catDistCounts: Record<string, number> = {};
     allData.forEach((r: any) => {
       if (r.category) {
@@ -165,39 +246,20 @@ export async function GET(request: NextRequest) {
     const categoryDistribution = Object.entries(catDistCounts)
       .sort(([, a], [, b]) => b - a)
       .map(([name, count]) => ({ name, count }));
-
-    // Top category (all sentiments, including Genel)
     const topCategory = categoryDistribution[0];
 
-    // ── Smart Insight (Last 24 Hours Metrics) ──
-    const last24hStart = new Date();
-    last24hStart.setHours(last24hStart.getHours() - 24);
-
-    let last24hQuery = supabase
-      .from("reviews")
-      .select("sentiment, category")
-      .gte("scraped_at", last24hStart.toISOString());
-    if (platform !== "all") last24hQuery = last24hQuery.eq("platform_name", platform);
-
-    const { data: last24hData, error: last24hError } = await last24hQuery;
-    if (last24hError) {
-      console.error("Error querying last 24h data:", last24hError);
-    }
-
+    // 2. last24h metrics
+    if (last24hError) console.error("Error querying last 24h data:", last24hError);
     const last24hDataList = last24hData || [];
     const last24hTotal = last24hDataList.length;
     const last24hPositive = last24hDataList.filter((r: any) => r.sentiment === "Positive").length;
     const last24hNegative = last24hTotal - last24hPositive;
-
     const last24hCatCounts: Record<string, number> = {};
     last24hDataList.forEach((r: any) => {
-      if (r.category) {
-        last24hCatCounts[r.category] = (last24hCatCounts[r.category] || 0) + 1;
-      }
+      if (r.category) last24hCatCounts[r.category] = (last24hCatCounts[r.category] || 0) + 1;
     });
     const last24hSortedCats = Object.entries(last24hCatCounts).sort(([, a], [, b]) => b - a);
     const last24hTopCategory = last24hSortedCats[0] ? last24hSortedCats[0][0] : "-";
-
     const smartInsight = {
       total: last24hTotal,
       positive: last24hPositive,
@@ -205,84 +267,20 @@ export async function GET(request: NextRequest) {
       topCategory: last24hTopCategory,
     };
 
-
-    // ── Churn Risk calculations ──
-    const CHURN_KEYWORDS = [
-      "iptal", "tüketici hakem heyeti", "avukat", "mahkeme", "taahhüt",
-      "cayma", "dava", "savcılık", "btk", "şikayet ettim", "hukuki",
-      "ceza", "sözleşme feshi", "ihtarname",
-    ];
-    const churnOrFilter = CHURN_KEYWORDS.map(kw => `original_text.ilike.%${kw}%`).join(",");
-
-    let churnQuery = supabase
-      .from("reviews")
-      .select("id", { count: "exact", head: true });
-    churnQuery = applyFilters(churnQuery);
-    churnQuery = churnQuery.or(churnOrFilter);
-    const { count: churnCountVal } = await churnQuery;
+    // 3. Churn metrics
     const churnCount = churnCountVal || 0;
-
     const churnRatio = totalFiltered > 0 ? Math.round((churnCount / totalFiltered) * 100) : 0;
 
-    // ── Total & Churn Comments Trend dynamic calculations ──
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-    let prevStartDate = sixtyDaysAgo.toISOString();
-    let prevEndDate = thirtyDaysAgo.toISOString();
+    // 4. Trend metrics
     let currentCountForTrend = totalFiltered;
     let currentChurnCountForTrend = churnCount;
-
-    if (dateFrom && dateTo) {
-      const dFrom = new Date(dateFrom);
-      const dTo = new Date(dateTo + "T23:59:59.999Z");
-      const durationMs = dTo.getTime() - dFrom.getTime();
-      prevStartDate = new Date(dFrom.getTime() - durationMs).toISOString();
-      prevEndDate = dFrom.toISOString();
-    } else {
-      // Calculate last 30 days reviews count for trend
-      let current30Query = supabase
-        .from("reviews")
-        .select("id", { count: "exact", head: true })
-        .gte("scraped_at", thirtyDaysAgo.toISOString());
-      if (platform !== "all") current30Query = current30Query.eq("platform_name", platform);
-      const { count: c30 } = await current30Query;
+    if (!dateFrom || !dateTo) {
       currentCountForTrend = c30 || 0;
-
-      let current30ChurnQuery = supabase
-        .from("reviews")
-        .select("id", { count: "exact", head: true })
-        .gte("scraped_at", thirtyDaysAgo.toISOString())
-        .or(churnOrFilter);
-      if (platform !== "all") current30ChurnQuery = current30ChurnQuery.eq("platform_name", platform);
-      const { count: c30Churn } = await current30ChurnQuery;
       currentChurnCountForTrend = c30Churn || 0;
     }
-
-    // Previous total reviews count
-    let prevQuery = supabase
-      .from("reviews")
-      .select("id", { count: "exact", head: true })
-      .gte("scraped_at", prevStartDate)
-      .lt("scraped_at", prevEndDate);
-    if (platform !== "all") prevQuery = prevQuery.eq("platform_name", platform);
-    const { count: prevCountVal } = await prevQuery;
     const prevCount = prevCountVal || 0;
-
-    // Previous churn reviews count
-    let prevChurnQuery = supabase
-      .from("reviews")
-      .select("id", { count: "exact", head: true })
-      .gte("scraped_at", prevStartDate)
-      .lt("scraped_at", prevEndDate)
-      .or(churnOrFilter);
-    if (platform !== "all") prevChurnQuery = prevChurnQuery.eq("platform_name", platform);
-    const { count: prevChurnCountVal } = await prevChurnQuery;
     const prevChurnCount = prevChurnCountVal || 0;
 
-    // Total Count Trend
     let trendValue = 0;
     if (prevCount > 0) {
       trendValue = Math.round(((currentCountForTrend - prevCount) / prevCount) * 100);
@@ -292,12 +290,12 @@ export async function GET(request: NextRequest) {
     const trendText = `${trendValue >= 0 ? "+" : ""}${trendValue}%`;
     const trendIsPositive = trendValue >= 0;
 
-    // Churn Ratio Trend
     const currentChurnRatioForTrend = currentCountForTrend > 0 ? Math.round((currentChurnCountForTrend / currentCountForTrend) * 100) : 0;
     const prevChurnRatio = prevCount > 0 ? Math.round((prevChurnCount / prevCount) * 100) : 0;
     const churnTrendValue = currentChurnRatioForTrend - prevChurnRatio;
     const churnTrendText = `${churnTrendValue >= 0 ? "+" : ""}${churnTrendValue}%`;
     const churnTrendIsPositive = churnTrendValue <= 0;
+
 
     // ── Daily trend data ──
     let trendStartDate = "";

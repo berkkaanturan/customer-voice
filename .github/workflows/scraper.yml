@@ -1,0 +1,55 @@
+name: Daily Review Scraper
+
+on:
+  schedule:
+    # Runs at 04:00 UTC (07:00 TRT) every day
+    - cron: '0 4 * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    
+    # We set a max timeout just in case it hangs, default is 6 hours, we set it to 2 hours
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # Caches pip dependencies for faster runs
+
+      - name: Install Dependencies
+        run: |
+          cd scraper
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Playwright requires installing browser binaries
+          playwright install --with-deps chromium
+
+      - name: Random Delay (Anti-Bot)
+        # Bypasses bot detection by starting at a random time within the 07:00 - 08:00 AM window
+        # The script will sleep a random amount between 0 and 3600 seconds (1 hour)
+        run: |
+          # If this is a manual trigger, don't sleep
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            DELAY=$((RANDOM % 3600))
+            echo "Running on a schedule. Sleeping for $DELAY seconds to prevent fixed-time bot detection..."
+            sleep $DELAY
+          else
+            echo "Running manually. Skipping delay."
+          fi
+
+      - name: Run Scraper
+        env:
+          # Pulling secrets from GitHub Repository Secrets
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          cd scraper
+          python main.py

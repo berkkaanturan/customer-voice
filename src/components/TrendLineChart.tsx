@@ -31,7 +31,7 @@ export default function TrendLineChart({ data }: Props) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="99%" height={260} minWidth={1} minHeight={1}>
       <ComposedChart data={data}>
         <defs>
           <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
@@ -103,16 +103,10 @@ export default function TrendLineChart({ data }: Props) {
           type="monotone"
           dataKey="total"
           fill="url(#totalGradient)"
-          stroke="none"
-          legendType="none"
-          fillOpacity={hoveredSeries === null || hoveredSeries === "total" ? 1 : 0.15}
-        />
-        <Line
-          type="monotone"
-          dataKey="total"
           stroke="#2563eb"
           strokeWidth={hoveredSeries === "total" ? 3 : 2}
           strokeOpacity={hoveredSeries === null || hoveredSeries === "total" ? 1 : 0.15}
+          fillOpacity={hoveredSeries === null || hoveredSeries === "total" ? 1 : 0.15}
           dot={false}
           activeDot={{ r: 4, fill: "#2563eb", stroke: "#ffffff", strokeWidth: 2 }}
           animationDuration={600}

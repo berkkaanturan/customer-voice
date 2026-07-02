@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Fragment } from "react";
 import type { Review } from "@/lib/supabase";
 import FilterBar from "./FilterBar";
 import KpiCards from "./KpiCards";
@@ -150,9 +150,10 @@ export default function Dashboard() {
   });
   const [dailyTrend, setDailyTrend] = useState<TrendPoint[]>([]);
   const [page, setPage] = useState(1);
-  const [pageInput, setPageInput] = useState("1");
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(true);
+  const [pageInput, setPageInput] = useState("1");
+  const [editingPageIdx, setEditingPageIdx] = useState<number | null>(null);
   const limit = 20;
 
   // 1. Fetch Dashboard Stats (triggered ONLY on platform/date changes)
@@ -436,14 +437,6 @@ export default function Dashboard() {
           <div className="bento-card rounded-2xl p-6 lg:col-span-2 flex flex-col h-[450px]">
             <div className="flex items-center justify-between mb-6 border-b border-outline-variant/10 pb-3">
               <h4 className="text-base font-bold text-[#220053]">Kategoriye Göre Yorumlar</h4>
-              <div className="flex items-center gap-1 select-none">
-                <button className="p-1 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-[20px] leading-none align-middle">chevron_left</span>
-                </button>
-                <button className="p-1 text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-[20px] leading-none align-middle">chevron_right</span>
-                </button>
-              </div>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
               {loading ? (
@@ -502,20 +495,52 @@ export default function Dashboard() {
                     <CaretLeft size={12} weight="bold" />
                   </button>
                   {getPageNumbers().map((p, idx) => (
-                    <button
-                      key={idx}
-                      disabled={p === "..."}
-                      onClick={() => typeof p === "number" && setPage(p)}
-                      className={`text-xs font-bold rounded-lg transition-all min-w-[32px] h-[32px] flex items-center justify-center ${
-                        p === page
-                          ? "bg-[#6b38d4] text-white shadow-xs"
-                          : p === "..."
-                          ? "text-on-surface-variant/40"
-                          : "border border-outline-variant hover:bg-surface-container cursor-pointer text-on-surface-variant"
-                      }`}
-                    >
-                      {p}
-                    </button>
+                    <Fragment key={idx}>
+                      {p === "..." && editingPageIdx === idx ? (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const parsed = parseInt(pageInput, 10);
+                            if (!isNaN(parsed) && parsed >= 1 && parsed <= totalPages) {
+                              setPage(parsed);
+                            }
+                            setEditingPageIdx(null);
+                          }}
+                        >
+                          <input
+                            autoFocus
+                            type="number"
+                            min={1}
+                            max={totalPages}
+                            value={pageInput}
+                            onChange={(e) => setPageInput(e.target.value)}
+                            onBlur={() => setEditingPageIdx(null)}
+                            className="w-[42px] h-[32px] text-xs font-bold text-center border border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 text-on-surface hide-spin-button"
+                            placeholder="..."
+                          />
+                        </form>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (typeof p === "number") {
+                              setPage(p);
+                            } else {
+                              setEditingPageIdx(idx);
+                              setPageInput("");
+                            }
+                          }}
+                          className={`text-xs font-bold rounded-lg transition-all min-w-[32px] h-[32px] flex items-center justify-center ${
+                            p === page
+                              ? "bg-[#6b38d4] text-white shadow-xs"
+                              : p === "..."
+                              ? "text-on-surface-variant/70 hover:text-on-surface hover:bg-surface-container cursor-pointer"
+                              : "border border-outline-variant hover:bg-surface-container cursor-pointer text-on-surface-variant"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      )}
+                    </Fragment>
                   ))}
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
