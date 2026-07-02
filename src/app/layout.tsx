@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Customer Voice Dashboard | TürkNet",
+  title: "VoC Turknet",
   description:
     "TürkNet müşteri yorumlarını toplayan, yapay zeka ile analiz eden ve merkezi raporlayan Voice of Customer dashboard.",
   keywords: ["customer voice", "dashboard", "türknet", "sentiment analysis", "AI"],
