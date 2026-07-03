@@ -86,10 +86,17 @@ interface ApiResponse {
 }
 
 export default function Dashboard() {
-  const [globalFilters, setGlobalFilters] = useState({
-    platform: "all",
-    dateFrom: "",
-    dateTo: "",
+  const [globalFilters, setGlobalFilters] = useState(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    const fromDate = new Date();
+    fromDate.setDate(today.getDate() - 30);
+    const fromStr = fromDate.toISOString().split("T")[0];
+    return {
+      platform: "all",
+      dateFrom: fromStr,
+      dateTo: todayStr,
+    };
   });
 
   const [tableFilters, setTableFilters] = useState({
@@ -100,7 +107,7 @@ export default function Dashboard() {
     sortOrder: "desc" as "asc" | "desc",
   });
 
-  const [activePreset, setActivePreset] = useState<string>("all");
+  const [activePreset, setActivePreset] = useState<string>("30d");
   const statsCacheRef = useRef<Record<string, any>>({});
 
   const handlePresetChange = (preset: string) => {
@@ -299,12 +306,7 @@ export default function Dashboard() {
     return pages;
   };
 
-  // Smart insight text
-  const insightText = (() => {
-    const { total, positive, negative, topCategory } = smartInsight;
-    if (total === 0) return "Son 24 saatte yeni yorum gelmedi.";
-    return `Son 24 saatte toplam ${total} yorum geldi (${positive} pozitif, ${negative} negatif). En çok yorum gelen kategori: ${topCategory}.`;
-  })();
+  // insightText logic removed in favor of inline JSX for the summary card
 
   const dateRangeLabel = (() => {
     if (!globalFilters.dateFrom && !globalFilters.dateTo) {
@@ -342,6 +344,54 @@ export default function Dashboard() {
       </nav>
 
       <main className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-4 md:space-y-6">
+        {/* Smart Insight Banner (24h Summary) */}
+        {loading ? (
+          <div className="shimmer-skeleton h-16 w-full rounded-xl" />
+        ) : (
+          <div className="bento-card relative overflow-hidden rounded-xl py-3 px-4 md:px-6 bg-gradient-to-r from-[#220053] to-[#400099] shadow-sm border-0 text-white flex flex-col xl:flex-row items-center gap-3 xl:gap-6">
+            
+            <div className="flex items-center gap-3 shrink-0 w-full xl:w-auto border-b xl:border-b-0 border-white/10 pb-3 xl:pb-0">
+              <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                <span className="material-symbols-outlined text-[20px] text-white select-none">history_toggle_off</span>
+              </div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider whitespace-nowrap">Son 24 Saat Özeti</h3>
+            </div>
+            
+            <div className="flex-1 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-5 w-full">
+              {smartInsight.total === 0 ? (
+                <p className="text-sm font-medium opacity-90">Son 24 saatte yeni yorum gelmedi.</p>
+              ) : (
+                <>
+                  <p className="text-sm font-medium whitespace-nowrap">
+                    Toplam <span className="text-amber-400 font-bold text-lg mx-1">{smartInsight.total}</span> yeni yorum
+                  </p>
+                  
+                  <div className="hidden md:block w-px h-5 bg-white/20"></div>
+
+                  <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                    <div className="flex items-center gap-2.5 text-xs font-bold bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                      <div className="flex items-center gap-1 text-emerald-400">
+                        <span className="material-symbols-outlined text-[14px]">thumb_up</span>
+                        {smartInsight.positive} Pozitif
+                      </div>
+                      <div className="w-px h-3 bg-white/20"></div>
+                      <div className="flex items-center gap-1 text-rose-400">
+                        <span className="material-symbols-outlined text-[14px]">thumb_down</span>
+                        {smartInsight.negative} Negatif
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs font-bold bg-white/10 px-2.5 py-1 rounded-md border border-white/10">
+                      <span className="material-symbols-outlined text-[14px] text-orange-400">local_fire_department</span>
+                      <span className="text-white/80 font-medium hidden sm:inline">En Yoğun Kategori:</span>
+                      <span className="text-white truncate max-w-[150px]">{smartInsight.topCategory}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 bg-white p-4 md:p-6 rounded-2xl border border-outline-variant/10 shadow-xs">
           <div className="flex items-center">
@@ -406,15 +456,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Smart Insight Banner */}
-        {loading ? (
-          <div className="shimmer-skeleton h-[54px] w-full rounded-xl" />
-        ) : (
-          <div className="bento-card rounded-xl px-6 py-4 flex items-center gap-3 border-l-4 border-l-secondary bg-white">
-            <span className="material-symbols-outlined text-secondary text-2xl select-none">insights</span>
-            <p className="text-sm text-on-surface font-medium">{insightText}</p>
-          </div>
-        )}
 
         {/* KPI Row */}
         <KpiCards kpi={kpi} loading={loading} />
