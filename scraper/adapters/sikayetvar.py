@@ -190,13 +190,13 @@ class SikayetvarAdapter(IncrementalScraper):
         try:
             resp = requests.get(url, headers=_HEADERS, timeout=15)
             if resp.status_code != 200:
-                return []
+                raise Exception(f"HTTP {resp.status_code} - {resp.reason}")
             return _parse_page(resp.text, url, cat_name)
         except Exception as exc:
             logger.warning(
                 "Şikayetvar (%s) page %d failed: %s", cat_name, page, exc,
             )
-            return []
+            raise  # Re-raise so the adapter fails and logs an error in dashboard
 
     def run_incremental(self, existing_hashes: set[str]) -> list[RawReview]:
         """Run incremental scrape across all categories independently.
