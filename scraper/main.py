@@ -79,74 +79,74 @@ def run_pipeline() -> None:
         existing_hashes = get_existing_hashes()
         logger.info("Loaded %d existing hashes.", len(existing_hashes))
 
-    # ── Step 2: Run all platform adapters ─────────────────────────────────────
-    logger.info("── Step 2/4: Running incremental scrapers ──")
-    all_new_reviews: list[dict[str, Any]] = []
+        # ── Step 2: Run all platform adapters ─────────────────────────────────────
+        logger.info("── Step 2/4: Running incremental scrapers ──")
+        all_new_reviews: list[dict[str, Any]] = []
 
-    adapters = [
-        PlayStoreAdapter(app_id=PLAY_STORE_APP_ID, count=500),
-        AppStoreAdapter(app_id=1001052556, country=APP_STORE_COUNTRY),
-        SikayetvarAdapter(brand_slug=SIKAYETVAR_BRAND),
-        EksiSozlukAdapter(search_keyword=EKSISOZLUK_TOPIC, topic_limit=35),
-    ]
+        adapters = [
+            PlayStoreAdapter(app_id=PLAY_STORE_APP_ID, count=500),
+            AppStoreAdapter(app_id=1001052556, country=APP_STORE_COUNTRY),
+            SikayetvarAdapter(brand_slug=SIKAYETVAR_BRAND),
+            EksiSozlukAdapter(search_keyword=EKSISOZLUK_TOPIC, topic_limit=35),
+        ]
 
-    for adapter in adapters:
-        logger.info("── Scraping %s ──", adapter.platform_name)
-        adapter_start = time.monotonic()
-        try:
-            new_reviews = adapter.run_incremental(existing_hashes)
-            elapsed = time.monotonic() - adapter_start
-            all_new_reviews.extend(new_reviews)
-            logger.info(
-                "%s: %d new reviews found in %.1fs.",
-                adapter.platform_name, len(new_reviews), elapsed,
-            )
-            platform_stats[adapter.platform_name] = {
-                "new_reviews": len(new_reviews),
-                "duration_seconds": round(elapsed, 2)
-            }
-        except Exception as exc:
-            elapsed = time.monotonic() - adapter_start
-            logger.error(
-                "%s: adapter failed: %s", adapter.platform_name, exc,
-                exc_info=True,
-            )
-            platform_stats[adapter.platform_name] = {
-                "new_reviews": 0,
-                "duration_seconds": round(elapsed, 2),
-                "error": str(exc)
-            }
+        for adapter in adapters:
+            logger.info("── Scraping %s ──", adapter.platform_name)
+            adapter_start = time.monotonic()
+            try:
+                new_reviews = adapter.run_incremental(existing_hashes)
+                elapsed = time.monotonic() - adapter_start
+                all_new_reviews.extend(new_reviews)
+                logger.info(
+                    "%s: %d new reviews found in %.1fs.",
+                    adapter.platform_name, len(new_reviews), elapsed,
+                )
+                platform_stats[adapter.platform_name] = {
+                    "new_reviews": len(new_reviews),
+                    "duration_seconds": round(elapsed, 2)
+                }
+            except Exception as exc:
+                elapsed = time.monotonic() - adapter_start
+                logger.error(
+                    "%s: adapter failed: %s", adapter.platform_name, exc,
+                    exc_info=True,
+                )
+                platform_stats[adapter.platform_name] = {
+                    "new_reviews": 0,
+                    "duration_seconds": round(elapsed, 2),
+                    "error": str(exc)
+                }
 
-    logger.info(
-        "Total new reviews across all platforms: %d", len(all_new_reviews),
-    )
+        logger.info(
+            "Total new reviews across all platforms: %d", len(all_new_reviews),
+        )
 
-    if not all_new_reviews:
-        elapsed = time.monotonic() - start
-        logger.info("No new reviews found. Pipeline complete in %.1fs.", elapsed)
-        logger.info("=" * 60)
-        return
+        if not all_new_reviews:
+            elapsed = time.monotonic() - start
+            logger.info("No new reviews found. Pipeline complete in %.1fs.", elapsed)
+            logger.info("=" * 60)
+            return
 
-    # ── Step 3: Analyse each review ───────────────────────────────────────────
-    logger.info("── Step 3/4: Analysing reviews with rule-based system ──")
-    total = len(all_new_reviews)
+        # ── Step 3: Analyse each review ───────────────────────────────────────────
+        logger.info("── Step 3/4: Analysing reviews with rule-based system ──")
+        total = len(all_new_reviews)
 
-    for idx, review in enumerate(all_new_reviews, start=1):
-        text = review.get("original_text", "")
-        rating = review.get("rating")
-        result = analyze_review(text, rating=rating)
-        review["sentiment"] = result["sentiment"]
-        # Only override category if not pre-classified (e.g. Şikayetvar categories)
-        if not review.get("category"):
-            review["category"] = result["category"]
-        review["keywords"] = result.get("keywords", [])
+        for idx, review in enumerate(all_new_reviews, start=1):
+            text = review.get("original_text", "")
+            rating = review.get("rating")
+            result = analyze_review(text, rating=rating)
+            review["sentiment"] = result["sentiment"]
+            # Only override category if not pre-classified (e.g. Şikayetvar categories)
+            if not review.get("category"):
+                review["category"] = result["category"]
+            review["keywords"] = result.get("keywords", [])
 
-        if idx % 50 == 0 or idx == total:
-            logger.info("Analysed %d / %d reviews.", idx, total)
+            if idx % 50 == 0 or idx == total:
+                logger.info("Analysed %d / %d reviews.", idx, total)
 
-    # ── Step 4: Save to Supabase ──────────────────────────────────────────────
-    logger.info("── Step 4/4: Saving to Supabase ──")
-    inserted = save_reviews(all_new_reviews)
+        # ── Step 4: Save to Supabase ──────────────────────────────────────────────
+        logger.info("── Step 4/4: Saving to Supabase ──")
+        inserted = save_reviews(all_new_reviews)
 
         elapsed = time.monotonic() - start
         logger.info("=" * 60)
