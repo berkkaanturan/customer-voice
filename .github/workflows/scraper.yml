@@ -28,9 +28,11 @@ jobs:
         run: |
           cd scraper
           python -m pip install --upgrade pip
+          # app-store-scraper has a strict pinned dependency on requests==2.23.0
+          # which conflicts with google-genai. We install it without dependencies
+          # since it works perfectly fine with modern requests versions.
+          pip install --no-deps app-store-scraper==0.3.5
           pip install -r requirements.txt
-          # Playwright requires installing browser binaries
-          playwright install --with-deps chromium
 
       - name: Random Delay (Anti-Bot)
         # Bypasses bot detection by starting at a random time within the 07:00 - 08:00 AM window
