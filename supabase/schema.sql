@@ -85,3 +85,27 @@ COMMENT ON COLUMN reviews.platform_name IS 'Source platform: Şikayetvar, Play S
 COMMENT ON COLUMN reviews.sentiment IS 'AI-determined sentiment: Positive, Negative, or Neutral';
 COMMENT ON COLUMN reviews.category IS 'AI-determined category: Altyapı, Fiyat, Kurulum, Müşteri Hizmetleri, etc.';
 COMMENT ON COLUMN reviews.is_read IS 'Whether the review has been viewed in the dashboard';
+
+-- ============================================
+-- SCRAPER LOGS TABLE
+-- Tracks the execution details of the daily scraping pipeline
+-- ============================================
+CREATE TABLE IF NOT EXISTS scraper_logs (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    started_at              TIMESTAMPTZ NOT NULL,
+    completed_at            TIMESTAMPTZ NOT NULL,
+    total_duration_seconds  NUMERIC(10, 2) NOT NULL,
+    status                  VARCHAR(20) NOT NULL CHECK (status IN ('success', 'error')),
+    error_message           TEXT,
+    platform_stats          JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS idx_scraper_logs_started_at ON scraper_logs (started_at DESC);
+
+ALTER TABLE scraper_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to logs"
+    ON scraper_logs FOR SELECT USING (true);
+
+CREATE POLICY "Allow service role insert to logs"
+    ON scraper_logs FOR INSERT WITH CHECK (true);

@@ -7,6 +7,7 @@ import KpiCards from "./KpiCards";
 import ReviewTable from "./ReviewTable";
 import dynamic from "next/dynamic";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import ScraperLogsModal from "./ScraperLogsModal";
 
 const SentimentPieChart = dynamic(() => import("./SentimentPieChart"), {
   ssr: false,
@@ -159,6 +160,7 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(true);
+  const [logsOpen, setLogsOpen] = useState(false);
   const [pageInput, setPageInput] = useState("1");
   const [editingPageIdx, setEditingPageIdx] = useState<number | null>(null);
   const limit = 20;
@@ -394,8 +396,17 @@ export default function Dashboard() {
 
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4 bg-white p-4 md:p-6 rounded-2xl border border-outline-variant/10 shadow-xs">
-          <div className="flex items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <h1 className="text-2xl md:text-[28px] font-bold text-[#220053] tracking-tight leading-none">Voice of Customer Genel Bakış</h1>
+            <button 
+              onClick={() => setLogsOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors border border-slate-700 w-fit"
+            >
+              <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Sistem Logları
+            </button>
           </div>
 
           {/* Date Selector Controls */}
@@ -601,7 +612,11 @@ export default function Dashboard() {
 
       <footer className="mt-12 py-8 px-8 text-center border-t border-outline-variant">
         <p className="text-on-surface-variant text-xs">© 2026 TurkNet VoC Hub.</p>
+        <button onClick={() => setLogsOpen(true)} className="text-xs text-primary mt-2">Logları Görüntüle</button>
       </footer>
+
+      {/* Scraper Logs Modal */}
+      <ScraperLogsModal isOpen={logsOpen} onClose={() => setLogsOpen(false)} />
     </div>
   );
 }

@@ -28,7 +28,7 @@ from config import (
     SENTIMENTS,
     SIKAYETVAR_BRAND,
 )
-from db import save_reviews, get_existing_hashes, clear_all_reviews
+from db import save_reviews, get_existing_hashes, clear_all_reviews, save_scraper_log
 
 # New incremental adapters
 from adapters import (
@@ -68,10 +68,16 @@ def run_pipeline() -> None:
     logger.info("Customer Voice Pipeline — starting (incremental mode)")
     logger.info("=" * 60)
 
-    # ── Step 1: Load existing hashes ──────────────────────────────────────────
-    logger.info("── Step 1/4: Loading existing hashes from DB ──")
-    existing_hashes = get_existing_hashes()
-    logger.info("Loaded %d existing hashes.", len(existing_hashes))
+    start_time_iso = datetime.now(timezone.utc).isoformat()
+    platform_stats = {}
+    status = "success"
+    error_message = None
+
+    try:
+        # ── Step 1: Load existing hashes ──────────────────────────────────────────
+        logger.info("── Step 1/4: Loading existing hashes from DB ──")
+        existing_hashes = get_existing_hashes()
+        logger.info("Loaded %d existing hashes.", len(existing_hashes))
 
     # ── Step 2: Run all platform adapters ─────────────────────────────────────
     logger.info("── Step 2/4: Running incremental scrapers ──")
@@ -95,11 +101,21 @@ def run_pipeline() -> None:
                 "%s: %d new reviews found in %.1fs.",
                 adapter.platform_name, len(new_reviews), elapsed,
             )
+            platform_stats[adapter.platform_name] = {
+                "new_reviews": len(new_reviews),
+                "duration_seconds": round(elapsed, 2)
+            }
         except Exception as exc:
+            elapsed = time.monotonic() - adapter_start
             logger.error(
                 "%s: adapter failed: %s", adapter.platform_name, exc,
                 exc_info=True,
             )
+            platform_stats[adapter.platform_name] = {
+                "new_reviews": 0,
+                "duration_seconds": round(elapsed, 2),
+                "error": str(exc)
+            }
 
     logger.info(
         "Total new reviews across all platforms: %d", len(all_new_reviews),
@@ -132,15 +148,33 @@ def run_pipeline() -> None:
     logger.info("── Step 4/4: Saving to Supabase ──")
     inserted = save_reviews(all_new_reviews)
 
-    elapsed = time.monotonic() - start
-    logger.info("=" * 60)
-    logger.info(
-        "Pipeline complete — %d new reviews found, %d inserted, %.1fs elapsed.",
-        len(all_new_reviews),
-        inserted,
-        elapsed,
-    )
-    logger.info("=" * 60)
+        elapsed = time.monotonic() - start
+        logger.info("=" * 60)
+        logger.info(
+            "Pipeline complete — %d new reviews found, %d inserted, %.1fs elapsed.",
+            len(all_new_reviews),
+            inserted,
+            elapsed,
+        )
+        logger.info("=" * 60)
+        
+    except Exception as e:
+        logger.error("Pipeline failed: %s", e, exc_info=True)
+        status = "error"
+        error_message = str(e)
+        
+    finally:
+        total_duration = time.monotonic() - start
+        end_time_iso = datetime.now(timezone.utc).isoformat()
+        save_scraper_log({
+            "started_at": start_time_iso,
+            "completed_at": end_time_iso,
+            "total_duration_seconds": round(total_duration, 2),
+            "status": status,
+            "error_message": error_message,
+            "platform_stats": platform_stats
+        })
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

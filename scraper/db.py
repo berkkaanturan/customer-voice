@@ -200,3 +200,23 @@ def get_latest_review_date(platform: str) -> str | None:
     except Exception as exc:
         logger.error("Failed to get latest review date for %s: %s", platform, exc)
         return None
+
+def save_scraper_log(log_data: dict[str, Any]) -> bool:
+    """Save execution metrics to the scraper_logs table.
+    
+    Expected keys:
+        started_at: str (ISO)
+        completed_at: str (ISO)
+        total_duration_seconds: float
+        status: str ('success' or 'error')
+        error_message: str | None
+        platform_stats: dict
+    """
+    client = get_supabase_client()
+    try:
+        client.table("scraper_logs").insert(log_data).execute()
+        logger.info("Successfully saved scraper log to database.")
+        return True
+    except Exception as exc:
+        logger.error("Failed to save scraper log: %s", exc)
+        return False

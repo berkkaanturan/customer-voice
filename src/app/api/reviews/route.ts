@@ -328,8 +328,16 @@ export async function GET(request: NextRequest) {
 
     const startD = new Date(trendStartDate);
     const endD = new Date(trendEndDate);
-    const diffTime = Math.abs(endD.getTime() - startD.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Convert UTC to Turkey local time strictly for date boundary counting
+    const trStart = new Date(startD.toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
+    const trEnd = new Date(endD.toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
+    
+    trStart.setHours(0, 0, 0, 0);
+    trEnd.setHours(0, 0, 0, 0);
+    
+    const diffTime = Math.abs(trEnd.getTime() - trStart.getTime());
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     const groupingMode = diffDays <= 90 ? "day" : diffDays <= 365 ? "week" : "month";
 
@@ -343,19 +351,23 @@ export async function GET(request: NextRequest) {
 
     const getGroupKey = (dateStr: string, mode: string) => {
       const d = new Date(dateStr);
-      if (mode === "day") return d.toISOString().split("T")[0];
+      const trDateStr = d.toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" }); // YYYY-MM-DD format
+      if (mode === "day") return trDateStr;
+      
+      const [y, m, day] = trDateStr.split("-").map(Number);
+      const trD = new Date(y, m - 1, day);
       if (mode === "week") {
-        const diff = d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1);
-        const mon = new Date(d.setDate(diff));
-        return mon.toISOString().split("T")[0];
+        const diff = trD.getDate() - trD.getDay() + (trD.getDay() === 0 ? -6 : 1);
+        const mon = new Date(trD.setDate(diff));
+        return mon.toLocaleDateString("en-CA");
       }
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+      return `${y}-${String(m).padStart(2, "0")}-01`;
     };
 
     // Pre-fill trend buckets
     const step = groupingMode === "day" ? 1 : groupingMode === "week" ? 7 : 28;
-    for (let i = 0; i <= diffDays + step; i += step) {
-      const d = new Date(startD);
+    for (let i = 0; i <= diffDays; i += step) {
+      const d = new Date(trStart);
       d.setDate(d.getDate() + i);
       const key = getGroupKey(d.toISOString(), groupingMode);
       if (!dailyTrend[key]) {
