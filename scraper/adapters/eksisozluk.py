@@ -19,18 +19,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from base_scraper import IncrementalScraper, RawReview, text_hash
+from config import get_random_headers
 
 logger = logging.getLogger(__name__)
-
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/125.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-}
 
 # ── Topic blacklist — slugs containing these substrings will be skipped ──────
 BLACKLISTED_SLUGS: set[str] = {
@@ -75,7 +66,7 @@ def discover_eksi_topics(keywords: str = "turknet", limit: int = 10) -> list[str
     for url in urls:
         try:
             logger.info("Ekşi Sözlük: searching for topics matching '%s' via → %s", keywords, url)
-            resp = requests.get(url, headers=_HEADERS, timeout=15)
+            resp = requests.get(url, headers=get_random_headers(), timeout=15)
             if resp.status_code != 200:
                 logger.warning("Ekşi Sözlük search page failed with status %d", resp.status_code)
                 continue
@@ -132,7 +123,7 @@ class _SingleTopicScraper(IncrementalScraper):
 
         initial_url = f"https://eksisozluk.com/{self.topic_slug}"
         try:
-            resp = requests.get(initial_url, headers=_HEADERS, timeout=15)
+            resp = requests.get(initial_url, headers=get_random_headers(), timeout=15)
             if resp.status_code != 200:
                 logger.warning(
                     "Ekşi Sözlük: topic '%s' returned status %d",
@@ -187,7 +178,7 @@ class _SingleTopicScraper(IncrementalScraper):
         reviews: list[RawReview] = []
 
         try:
-            resp = requests.get(url, headers=_HEADERS, timeout=15)
+            resp = requests.get(url, headers=get_random_headers(), timeout=15)
             if resp.status_code == 404:
                 return []
             resp.raise_for_status()

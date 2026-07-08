@@ -13,18 +13,9 @@ from datetime import datetime, timezone
 import requests
 
 from base_scraper import IncrementalScraper, RawReview
+from config import get_random_headers
 
 logger = logging.getLogger(__name__)
-
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/125.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-}
 
 
 class AppStoreAdapter(IncrementalScraper):
@@ -57,7 +48,7 @@ class AppStoreAdapter(IncrementalScraper):
         reviews: list[RawReview] = []
 
         try:
-            resp = requests.get(url, headers=_HEADERS, timeout=15)
+            resp = requests.get(url, headers=get_random_headers(), timeout=15)
             if resp.status_code != 200:
                 raise Exception(f"HTTP {resp.status_code} - {resp.reason}")
 
