@@ -97,4 +97,7 @@ class AppStoreAdapter(IncrementalScraper):
             logger.error("App Store RSS page %d failed: %s", page_number, exc)
             raise
 
+        if page_number == 1 and not reviews:
+            raise Exception("App Store RSS page 1 returned 0 reviews. API might have changed or feed is empty.")
+
         return reviews

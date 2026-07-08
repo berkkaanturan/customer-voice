@@ -223,6 +223,9 @@ class _SingleTopicScraper(IncrementalScraper):
             )
             raise
 
+        if page_number == 1 and not reviews:
+            raise Exception(f"Ekşi Sözlük page 1 for topic '{self._resolved_slug}' returned 0 reviews. Either blocked by CAPTCHA or HTML structure changed.")
+
         return reviews
 
 

@@ -212,6 +212,9 @@ class SikayetvarAdapter(IncrementalScraper):
 
                 page_reviews = self._fetch_category_page(cat_slug, cat_name, page)
 
+                if page == 1 and cat_name == "Genel" and not page_reviews:
+                    raise Exception("Şikayetvar 'Genel' page 1 returned 0 reviews. Either HTML structure changed or blocked by CAPTCHA.")
+
                 if not page_reviews:
                     break  # no more pages
 

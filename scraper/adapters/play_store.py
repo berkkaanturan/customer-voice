@@ -92,5 +92,8 @@ class PlayStoreAdapter(IncrementalScraper):
                 )
                 raise
 
+        if not reviews:
+            raise Exception("Play Store returned 0 reviews. API structure might have changed or requests are blocked.")
+
         logger.info("Play Store: fetched %d reviews total.", len(reviews))
         return reviews
