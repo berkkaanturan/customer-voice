@@ -100,6 +100,5 @@ def get_random_headers() -> dict[str, str]:
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
         "Connection": "keep-alive"
     }
