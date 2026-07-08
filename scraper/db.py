@@ -63,6 +63,7 @@ def get_existing_hashes() -> set[str]:
             result = (
                 client.table(TABLE_NAME)
                 .select("text_hash")
+                .order("created_at")
                 .range(page * limit, (page + 1) * limit - 1)
                 .execute()
             )

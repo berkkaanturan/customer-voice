@@ -43,11 +43,15 @@ export interface KpiData {
     value: string;
     label: string;
     isPositive: boolean;
+    direction?: "up" | "down";
+    isGood?: boolean;
   };
   churnRatioTrend?: {
     value: string;
     label: string;
     isPositive: boolean;
+    direction?: "up" | "down";
+    isGood?: boolean;
   };
 }
 

@@ -230,6 +230,7 @@ class _SingleTopicScraper(IncrementalScraper):
                 "Ekşi Sözlük: failed to fetch page %d of '%s': %s",
                 page_number, self._resolved_slug, exc,
             )
+            raise
 
         return reviews
 

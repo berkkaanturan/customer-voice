@@ -402,13 +402,17 @@ export async function GET(request: NextRequest) {
           : { name: "-", count: 0 },
         trend: {
           value: trendText,
-          label: dateFrom && dateTo ? "önceki döneme göre" : "geçen aya göre",
-          isPositive: trendIsPositive
+          label: dateFrom && dateTo ? `Önceki ${diffDays} güne göre` : "Önceki 30 güne göre",
+          isPositive: trendIsPositive,
+          direction: trendValue >= 0 ? "up" : "down",
+          isGood: trendIsPositive
         },
         churnRatioTrend: {
           value: churnTrendText,
-          label: dateFrom && dateTo ? "önceki döneme göre" : "geçen aya göre",
-          isPositive: churnTrendIsPositive
+          label: dateFrom && dateTo ? `Önceki ${diffDays} güne göre` : "Önceki 30 güne göre",
+          isPositive: churnTrendIsPositive,
+          direction: churnTrendValue >= 0 ? "up" : "down",
+          isGood: churnTrendIsPositive
         }
       },
       sentimentDistribution: sentimentDist,

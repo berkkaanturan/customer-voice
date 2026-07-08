@@ -59,11 +59,7 @@ class AppStoreAdapter(IncrementalScraper):
         try:
             resp = requests.get(url, headers=_HEADERS, timeout=15)
             if resp.status_code != 200:
-                logger.warning(
-                    "App Store RSS page %d returned status %d",
-                    page_number, resp.status_code,
-                )
-                return []
+                raise Exception(f"HTTP {resp.status_code} - {resp.reason}")
 
             data = resp.json()
             feed = data.get("feed", {})
@@ -108,5 +104,6 @@ class AppStoreAdapter(IncrementalScraper):
 
         except Exception as exc:
             logger.error("App Store RSS page %d failed: %s", page_number, exc)
+            raise
 
         return reviews

@@ -6,7 +6,8 @@ import {
   UserMinus, 
   Shapes, 
   TrendUp, 
-  TrendDown 
+  TrendDown,
+  Info
 } from "@phosphor-icons/react";
 
 interface KpiCardsProps {
@@ -73,21 +74,32 @@ export default function KpiCards({ kpi, loading }: KpiCardsProps) {
                 </h3>
                 
                 {/* Trend Info */}
-                {card.trend && (
-                  <div className="flex items-center gap-1.5">
-                    {card.trend.isPositive ? (
-                      <TrendUp size={16} weight="bold" className="text-positive" />
-                    ) : (
-                      <TrendDown size={16} weight="bold" className="text-negative" />
-                    )}
-                    <span className={`text-sm font-bold leading-none ${card.trend.isPositive ? "text-positive" : "text-negative"}`}>
-                      {card.trend.value}
-                    </span>
-                    <span className="text-xs text-on-surface-variant font-medium opacity-80 leading-none mt-[1px]">
-                      {card.trend.label}
-                    </span>
-                  </div>
-                )}
+                {card.trend && (() => {
+                  const direction = card.trend.direction || (card.trend.isPositive ? "up" : "down");
+                  const isGood = card.trend.isGood !== undefined ? card.trend.isGood : card.trend.isPositive;
+                  const colorClass = isGood ? "text-positive" : "text-negative";
+                  return (
+                    <div className="flex items-center gap-1.5">
+                      {direction === "up" ? (
+                        <TrendUp size={16} weight="bold" className={colorClass} />
+                      ) : (
+                        <TrendDown size={16} weight="bold" className={colorClass} />
+                      )}
+                      <span className={`text-sm font-bold leading-none ${colorClass}`}>
+                        {card.trend.value}
+                      </span>
+                      <span className="text-xs text-on-surface-variant font-medium opacity-80 leading-none mt-[1px] flex items-center gap-1">
+                        {card.trend.label}
+                        <span className="group relative cursor-pointer inline-flex items-center">
+                          <Info size={13} className="text-on-surface-variant/40 hover:text-on-surface-variant/80 transition-colors" />
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block w-48 bg-slate-900 text-white text-[10px] p-2 rounded-lg shadow-lg font-normal leading-normal z-50 text-center">
+                            Seçilen tarih aralığının hemen öncesindeki aynı uzunluktaki dönemle karşılaştırmayı gösterir.
+                          </span>
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 {/* Subtitle (e.g. category percentage) */}
                 {card.subtitle && (

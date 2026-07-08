@@ -90,6 +90,7 @@ class PlayStoreAdapter(IncrementalScraper):
                 logger.error(
                     "Play Store (score=%d) failed: %s", score, exc,
                 )
+                raise
 
         logger.info("Play Store: fetched %d reviews total.", len(reviews))
         return reviews
