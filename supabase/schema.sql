@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS scrape_state (
 );
 
 ALTER TABLE scrape_state ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow public read access to scrape_state"
-    ON scrape_state FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read access to scrape_state" ON scrape_state;
+DROP POLICY IF EXISTS "Allow all access to scrape_state" ON scrape_state;
+CREATE POLICY "Allow all access to scrape_state"
+    ON scrape_state FOR ALL USING (true) WITH CHECK (true);

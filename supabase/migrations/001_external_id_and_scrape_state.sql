@@ -92,15 +92,11 @@ ALTER TABLE scrape_state ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE tablename = 'scrape_state' AND policyname = 'Allow public read access to scrape_state'
-    ) THEN
-        CREATE POLICY "Allow public read access to scrape_state"
-            ON scrape_state FOR SELECT USING (true);
-    END IF;
+    DROP POLICY IF EXISTS "Allow public read access to scrape_state" ON scrape_state;
+    DROP POLICY IF EXISTS "Allow all access to scrape_state" ON scrape_state;
+    CREATE POLICY "Allow all access to scrape_state"
+        ON scrape_state FOR ALL USING (true) WITH CHECK (true);
 END $$;
--- (Writes are done with the service-role key, which bypasses RLS.)
 
 -- Quick check after running:
 -- SELECT platform_name, count(*) AS total, count(external_id) AS with_id

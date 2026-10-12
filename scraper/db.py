@@ -153,9 +153,13 @@ def save_scrape_state(updates: list[dict[str, Any]]) -> None:
     now = datetime.now(timezone.utc).isoformat()
     rows = [{**u, "updated_at": now} for u in updates]
     for i in range(0, len(rows), 200):
-        client.table("scrape_state").upsert(
-            rows[i : i + 200], on_conflict="platform_name,source_key",
-        ).execute()
+        try:
+            client.table("scrape_state").upsert(
+                rows[i : i + 200], on_conflict="platform_name,source_key",
+            ).execute()
+        except Exception as exc:
+            logger.error("Failed to save scrape_state batch: %s", exc)
+            return
     logger.info("Saved %d scrape_state rows.", len(rows))
 
 
