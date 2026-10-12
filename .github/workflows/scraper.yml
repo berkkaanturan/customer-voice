@@ -86,7 +86,3 @@ jobs:
           echo "Executing: $CMD"
           eval $CMD
 
-      - name: Keep Workflow Active
-        # Prevents GitHub from automatically disabling scheduled workflows after 60 days of inactivity
-        uses: gautamkrishnar/keepalive-workflow@v2
-        if: always()
