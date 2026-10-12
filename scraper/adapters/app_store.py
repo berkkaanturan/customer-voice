@@ -1,8 +1,9 @@
 """
-App Store adapter for incremental scraping.
+App Store adapter (v2 — ID watermark incremental).
 
-Uses Apple's public RSS/JSON feed with sortBy=mostRecent (DESC).
-Maximum 10 pages, 50 reviews per page.
+Uses Apple's public RSS JSON feed (sortBy=mostRecent) which gives up to
+10 pages of 50 reviews (500 newest reviews).
+Every review has a permanent unique ID (entry.id.label).
 """
 
 from __future__ import annotations
@@ -10,94 +11,95 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-import requests
-
-from base_scraper import IncrementalScraper, RawReview
-from config import get_random_headers
+from base_scraper import IncrementalScraper, RawReview, ScrapeContext
+from http_client import HttpClient
 
 logger = logging.getLogger(__name__)
 
 
 class AppStoreAdapter(IncrementalScraper):
-    """Incremental adapter for Apple App Store reviews via RSS feed.
-
-    RSS endpoint: itunes.apple.com/{country}/rss/customerreviews/
-                  page={n}/id={app_id}/sortBy=mostRecent/json
-
-    Sort: mostRecent → page 1 has the newest reviews → DESC.
-    Apple limits: max 10 pages, ~50 reviews per page.
-    """
-
     platform_name = "App Store"
-    sort_direction = "desc"
 
-    def __init__(self, app_id: int = 1001052556, country: str = "tr"):
+    def __init__(self, app_id: int = 1001052556, country: str = "tr") -> None:
+        super().__init__()
         self.app_id = app_id
         self.country = country
+        self.http = HttpClient("App Store", min_delay=1.0, max_delay=2.5, retries=3)
 
-    def total_pages(self) -> int:
-        """Apple RSS supports up to 10 pages."""
-        return 10
-
-    def fetch_page(self, page_number: int) -> list[RawReview]:
-        """Fetch a single RSS page of App Store reviews."""
+    def _fetch_page(self, page_number: int) -> list[RawReview]:
         url = (
             f"https://itunes.apple.com/{self.country}/rss/customerreviews/"
             f"page={page_number}/id={self.app_id}/sortBy=mostRecent/json"
         )
+        resp = self.http.get(url, allow_404=True)
+        if resp.status_code != 200:
+            return []
+
+        data = resp.json()
+        feed = data.get("feed", {})
+        entries = feed.get("entry", [])
+        if isinstance(entries, dict):
+            entries = [entries]
+        if not entries:
+            return []
+
         reviews: list[RawReview] = []
+        for entry in entries:
+            # Skip app metadata entry (first entry on page 1)
+            if "im:name" in entry:
+                continue
 
-        try:
-            resp = requests.get(url, headers=get_random_headers(), timeout=15)
-            if resp.status_code != 200:
-                raise Exception(f"HTTP {resp.status_code} - {resp.reason}")
+            ext_id = str(entry.get("id", {}).get("label") or "").strip()
+            author = entry.get("author", {}).get("name", {}).get("label", "Anonim")
+            content = entry.get("content", {}).get("label", "")
+            title = entry.get("title", {}).get("label", "")
+            rating_str = entry.get("im:rating", {}).get("label", "0")
+            try:
+                rating = int(rating_str)
+            except ValueError:
+                rating = None
 
-            data = resp.json()
-            feed = data.get("feed", {})
-            entries = feed.get("entry", [])
+            full_text = f"{title}\n{content}" if title else content
+            if not full_text.strip():
+                continue
 
-            if isinstance(entries, dict):
-                entries = [entries]
+            date_str = entry.get("updated", {}).get("label") or datetime.now(timezone.utc).isoformat()
 
-            if not entries:
-                return []
-
-            for entry in entries:
-                # Skip app metadata entry (first entry on page 1)
-                if "im:name" in entry:
-                    continue
-
-                author = entry.get("author", {}).get("name", {}).get("label", "Anonim")
-                content = entry.get("content", {}).get("label", "")
-                title = entry.get("title", {}).get("label", "")
-                rating_str = entry.get("im:rating", {}).get("label", "0")
-
-                try:
-                    rating = int(rating_str)
-                except ValueError:
-                    rating = None
-
-                full_text = f"{title}\n{content}" if title else content
-
-                reviews.append(
-                    RawReview(
-                        platform_name="App Store",
-                        author=author,
-                        original_text=full_text.strip(),
-                        rating=rating,
-                        source_url=f"https://apps.apple.com/{self.country}/app/turknet/id{self.app_id}",
-                        scraped_at=(
-                            entry.get("updated", {}).get("label")
-                            or datetime.now(tz=timezone.utc).isoformat()
-                        ),
-                    )
+            reviews.append(
+                RawReview(
+                    platform_name=self.platform_name,
+                    external_id=ext_id,
+                    author=author,
+                    original_text=full_text.strip(),
+                    rating=rating,
+                    source_url=f"https://apps.apple.com/{self.country}/app/turknet/id{self.app_id}",
+                    scraped_at=date_str,
                 )
-
-        except Exception as exc:
-            logger.error("App Store RSS page %d failed: %s", page_number, exc)
-            raise
-
-        if page_number == 1 and not reviews:
-            raise Exception("App Store RSS page 1 returned 0 reviews. API might have changed or feed is empty.")
+            )
 
         return reviews
+
+    def run_incremental(self, ctx: ScrapeContext) -> list[RawReview]:
+        source_key = "default"
+        errors: list[str] = []
+        all_new: list[RawReview] = []
+
+        try:
+            all_new = self.scan_pages(
+                ctx,
+                source_key,
+                range(1, 11),
+                self._fetch_page,
+                label=f"App Store/{self.app_id}",
+                max_pages=10,
+            )
+        except Exception as exc:
+            logger.error("App Store: failed: %s", exc, exc_info=True)
+            errors.append(str(exc))
+
+        self.stats = {
+            "requests": self.http.request_count,
+            "new_reviews": len(all_new),
+            "errors": errors,
+        }
+        return all_new

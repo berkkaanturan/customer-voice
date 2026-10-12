@@ -23,10 +23,12 @@ CREATE TABLE IF NOT EXISTS reviews (
     source_url      TEXT,                        -- Original review URL
     subject         VARCHAR(255),                -- Review title or topic/subject (optional)
     text_hash       VARCHAR(64),                 -- SHA-256 hash for deduplication
+    external_id     TEXT,                        -- Stable per-platform ID (entry id, reviewId, complaint path)
     keywords        TEXT[] DEFAULT '{}',         -- Extracted domain-specific keywords
     is_read         BOOLEAN NOT NULL DEFAULT false, -- Read status for dashboard
     scraped_at      TIMESTAMPTZ NOT NULL DEFAULT now(), -- When the review was scraped
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()  -- Row creation timestamp
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),  -- Row creation timestamp
+    CONSTRAINT uq_reviews_platform_external_id UNIQUE (platform_name, external_id)
 );
 
 -- ============================================
@@ -109,3 +111,24 @@ CREATE POLICY "Allow public read access to logs"
 
 CREATE POLICY "Allow service role insert to logs"
     ON scraper_logs FOR INSERT WITH CHECK (true);
+
+-- ============================================
+-- SCRAPE STATE TABLE
+-- Per-source watermark used for incremental scraping
+-- (see migrations/001_external_id_and_scrape_state.sql)
+-- ============================================
+CREATE TABLE IF NOT EXISTS scrape_state (
+    platform_name     TEXT NOT NULL,
+    source_key        TEXT NOT NULL,
+    last_external_id  TEXT,
+    last_seen_at      TIMESTAMPTZ,
+    last_entry_count  INTEGER,
+    meta              JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (platform_name, source_key)
+);
+
+ALTER TABLE scrape_state ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to scrape_state"
+    ON scrape_state FOR SELECT USING (true);

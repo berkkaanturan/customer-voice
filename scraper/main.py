@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
-Customer Voice Dashboard — main pipeline orchestrator.
+Customer Voice Dashboard — pipeline orchestrator (v2).
 
 Usage:
-    python main.py            # Run the incremental scrape → analyse → save pipeline
-    python main.py --seed     # Seed the database with ~50 realistic demo reviews
-    python main.py --clear    # Delete all records from the reviews table
+    python main.py                     # Incremental scrape → analyse → save
+    python main.py --dry-run           # Scrape & analyse without saving to DB
+    python main.py --backfill          # Backfill history (default: last 30 days)
+    python main.py --backfill --since 2026-09-01  # Backfill from specific date
+    python main.py --platform eksi     # Run single platform (eksi, sikayetvar, play, app)
+    python main.py --seed              # Seed ~50 demo reviews
+    python main.py --clear             # Delete all records from reviews table
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
+import os
 import random
 import sys
 import time
@@ -19,23 +24,33 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from analyzer import analyze_review
+from base_scraper import RawReview, ScrapeContext, parse_iso
 from config import (
     APP_STORE_APP_NAME,
     APP_STORE_COUNTRY,
     CATEGORIES,
-    EKSISOZLUK_TOPIC,
+    INITIAL_LOOKBACK_DAYS,
+    OVERLAP_PAGES,
     PLAY_STORE_APP_ID,
     SENTIMENTS,
     SIKAYETVAR_BRAND,
 )
-from db import save_reviews, get_existing_hashes, clear_all_reviews, save_scraper_log
+from db import (
+    clear_all_reviews,
+    get_known_ids,
+    get_legacy_hashes,
+    get_recent_logs,
+    get_scrape_state,
+    save_reviews,
+    save_scrape_state,
+    save_scraper_log,
+)
 
-# New incremental adapters
 from adapters import (
-    PlayStoreAdapter,
     AppStoreAdapter,
-    SikayetvarAdapter,
     EksiSozlukAdapter,
+    PlayStoreAdapter,
+    SikayetvarAdapter,
 )
 
 # ── Logging setup ─────────────────────────────────────────────────────────────
@@ -50,293 +65,271 @@ logging.basicConfig(
 logger = logging.getLogger("pipeline")
 
 
+# ── Alerting helper ───────────────────────────────────────────────────────────
+def send_alert_if_needed(summary: dict[str, Any]) -> None:
+    """Best-effort notification via webhook or Telegram if configured."""
+    alerts: list[str] = []
+
+    # 1. Platform failure
+    for p_name, stats in summary.get("platform_stats", {}).items():
+        if stats.get("errors"):
+            alerts.append(f"⚠️ {p_name} error: {stats['errors'][:2]}")
+
+    # 2. Şikayetvar 403
+    sv_stats = summary.get("platform_stats", {}).get("Şikayetvar", {})
+    if sv_stats.get("blocked", 0) > 0:
+        alerts.append(f"🚨 Şikayetvar received {sv_stats['blocked']} blocked responses (403/429).")
+
+    # 3. Two consecutive zero-review runs
+    recent = get_recent_logs(limit=2)
+    if len(recent) >= 2:
+        for p_name in ["Ekşi Sözlük", "Şikayetvar"]:
+            zeroes = all(
+                (log.get("platform_stats", {}).get(p_name, {}).get("new_reviews") == 0)
+                for log in recent
+            )
+            curr_zero = summary.get("platform_stats", {}).get(p_name, {}).get("new_reviews") == 0
+            if zeroes and curr_zero:
+                alerts.append(f"ℹ️ {p_name}: 0 new reviews for 3 consecutive runs.")
+
+    if not alerts:
+        return
+
+    msg = "Customer Voice Alert:\n" + "\n".join(alerts)
+    logger.warning("ALERTS TRIGGERED:\n%s", msg)
+
+    webhook_url = os.getenv("ALERT_WEBHOOK_URL", "").strip()
+    if webhook_url:
+        try:
+            import requests
+            requests.post(webhook_url, json={"text": msg}, timeout=10)
+        except Exception as exc:
+            logger.warning("Failed to send webhook alert: %s", exc)
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
-# Incremental pipeline (new architecture)
+# Pipeline Execution
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def run_pipeline() -> None:
-    """Execute the full incremental scrape → analyse → save pipeline.
-
-    The new architecture:
-    1. Load all existing text hashes from DB (one-time)
-    2. Run each platform adapter's incremental scraper
-    3. Analyse new reviews with rule-based system
-    4. Save to Supabase (dedup handled by db.py)
-    """
+def run_pipeline(
+    *,
+    dry_run: bool = False,
+    backfill_since: datetime | None = None,
+    target_platforms: list[str] | None = None,
+) -> None:
     start = time.monotonic()
+    mode = "BACKFILL" if backfill_since else ("DRY-RUN" if dry_run else "INCREMENTAL")
     logger.info("=" * 60)
-    logger.info("Customer Voice Pipeline — starting (incremental mode)")
+    logger.info("Customer Voice Pipeline — starting (%s mode)", mode)
+    if backfill_since:
+        logger.info("Backfill cutoff date: %s", backfill_since.isoformat())
     logger.info("=" * 60)
 
     start_time_iso = datetime.now(timezone.utc).isoformat()
-    platform_stats = {}
-    status = "success"
-    error_message = None
+    platform_stats: dict[str, Any] = {}
+    overall_status = "success"
+    overall_error: str | None = None
 
     try:
-        # ── Step 1: Load existing hashes ──────────────────────────────────────────
-        logger.info("── Step 1/4: Loading existing hashes from DB ──")
-        existing_hashes = get_existing_hashes()
-        logger.info("Loaded %d existing hashes.", len(existing_hashes))
+        # ── Step 1: Load Context from DB ──────────────────────────────────────
+        logger.info("── Step 1/4: Loading state & known IDs from DB ──")
+        known_ids = get_known_ids()
+        legacy_hashes = get_legacy_hashes()
+        state = get_scrape_state()
 
-        # ── Step 2: Run all platform adapters ─────────────────────────────────────
-        logger.info("── Step 2/4: Running incremental scrapers ──")
-        all_new_reviews: list[dict[str, Any]] = []
+        ctx = ScrapeContext(
+            known_ids=known_ids,
+            legacy_hashes=legacy_hashes,
+            state=state,
+            backfill_since=backfill_since,
+            initial_lookback_days=INITIAL_LOOKBACK_DAYS,
+            overlap_pages=OVERLAP_PAGES,
+        )
 
-        adapters = [
-            PlayStoreAdapter(app_id=PLAY_STORE_APP_ID, count=500),
-            AppStoreAdapter(app_id=1001052556, country=APP_STORE_COUNTRY),
-            SikayetvarAdapter(brand_slug=SIKAYETVAR_BRAND),
-            EksiSozlukAdapter(search_keyword=EKSISOZLUK_TOPIC, topic_limit=35),
+        # ── Step 2: Initialize & Run Adapters ─────────────────────────────────
+        logger.info("── Step 2/4: Running scrapers ──")
+        all_adapters = [
+            ("play", PlayStoreAdapter(app_id=PLAY_STORE_APP_ID)),
+            ("app", AppStoreAdapter(app_id=1001052556, country=APP_STORE_COUNTRY)),
+            ("sikayetvar", SikayetvarAdapter(brand_slug=SIKAYETVAR_BRAND)),
+            ("eksi", EksiSozlukAdapter()),
         ]
 
-        for adapter in adapters:
+        active_adapters = []
+        for alias, adapter in all_adapters:
+            if target_platforms and alias not in target_platforms and adapter.platform_name.lower() not in target_platforms:
+                continue
+            active_adapters.append(adapter)
+
+        all_new_reviews: list[RawReview] = []
+
+        for adapter in active_adapters:
             logger.info("── Scraping %s ──", adapter.platform_name)
-            adapter_start = time.monotonic()
+            a_start = time.monotonic()
             try:
-                new_reviews = adapter.run_incremental(existing_hashes)
-                elapsed = time.monotonic() - adapter_start
-                all_new_reviews.extend(new_reviews)
+                new_revs = adapter.run_incremental(ctx)
+                elapsed = time.monotonic() - a_start
+                all_new_reviews.extend(new_revs)
                 logger.info(
                     "%s: %d new reviews found in %.1fs.",
-                    adapter.platform_name, len(new_reviews), elapsed,
+                    adapter.platform_name, len(new_revs), elapsed,
                 )
-                platform_stats[adapter.platform_name] = {
-                    "new_reviews": len(new_reviews),
-                    "duration_seconds": round(elapsed, 2)
-                }
+                stats = dict(adapter.stats)
+                stats.update({
+                    "new_reviews": len(new_revs),
+                    "duration_seconds": round(elapsed, 2),
+                })
+                platform_stats[adapter.platform_name] = stats
             except Exception as exc:
-                elapsed = time.monotonic() - adapter_start
-                logger.error(
-                    "%s: adapter failed: %s", adapter.platform_name, exc,
-                    exc_info=True,
-                )
+                elapsed = time.monotonic() - a_start
+                logger.error("%s adapter crashed: %s", adapter.platform_name, exc, exc_info=True)
                 platform_stats[adapter.platform_name] = {
                     "new_reviews": 0,
                     "duration_seconds": round(elapsed, 2),
-                    "error": str(exc)
+                    "error": str(exc),
                 }
 
-        logger.info(
-            "Total new reviews across all platforms: %d", len(all_new_reviews),
-        )
+        logger.info("Total new reviews collected: %d", len(all_new_reviews))
 
-        if not all_new_reviews:
-            elapsed = time.monotonic() - start
-            logger.info("No new reviews found. Pipeline complete in %.1fs.", elapsed)
-            logger.info("=" * 60)
-            return
+        # ── Step 3: Analyze ───────────────────────────────────────────────────
+        if all_new_reviews:
+            logger.info("── Step 3/4: Analysing reviews ──")
+            total = len(all_new_reviews)
+            for idx, review in enumerate(all_new_reviews, start=1):
+                text = review.get("original_text", "")
+                rating = review.get("rating")
+                res = analyze_review(text, rating=rating)
+                review["sentiment"] = res["sentiment"]
+                if not review.get("category"):
+                    review["category"] = res["category"]
+                review["keywords"] = res.get("keywords", [])
+                if idx % 100 == 0 or idx == total:
+                    logger.info("Analysed %d / %d reviews.", idx, total)
 
-        # ── Step 3: Analyse each review ───────────────────────────────────────────
-        logger.info("── Step 3/4: Analysing reviews with rule-based system ──")
-        total = len(all_new_reviews)
-
-        for idx, review in enumerate(all_new_reviews, start=1):
-            text = review.get("original_text", "")
-            rating = review.get("rating")
-            result = analyze_review(text, rating=rating)
-            review["sentiment"] = result["sentiment"]
-            # Only override category if not pre-classified (e.g. Şikayetvar categories)
-            if not review.get("category"):
-                review["category"] = result["category"]
-            review["keywords"] = result.get("keywords", [])
-
-            if idx % 50 == 0 or idx == total:
-                logger.info("Analysed %d / %d reviews.", idx, total)
-
-        # ── Step 4: Save to Supabase ──────────────────────────────────────────────
-        logger.info("── Step 4/4: Saving to Supabase ──")
-        inserted = save_reviews(all_new_reviews)
+        # ── Step 4: Save ──────────────────────────────────────────────────────
+        inserted = 0
+        failed = 0
+        if not dry_run:
+            logger.info("── Step 4/4: Persisting reviews & watermark state ──")
+            if all_new_reviews:
+                inserted, failed = save_reviews(all_new_reviews)
+            save_scrape_state(list(ctx.state_updates.values()))
+        else:
+            logger.info("DRY-RUN: Skipping database persistence.")
+            inserted = len(all_new_reviews)
 
         elapsed = time.monotonic() - start
         logger.info("=" * 60)
         logger.info(
-            "Pipeline complete — %d new reviews found, %d inserted, %.1fs elapsed.",
-            len(all_new_reviews),
-            inserted,
-            elapsed,
+            "Pipeline finished — %d collected, %d saved (%d failed), %.1fs elapsed.",
+            len(all_new_reviews), inserted, failed, elapsed,
         )
         logger.info("=" * 60)
-        
-    except Exception as e:
-        logger.error("Pipeline failed: %s", e, exc_info=True)
-        status = "error"
-        error_message = str(e)
-        
+
+    except Exception as exc:
+        overall_status = "error"
+        overall_error = str(exc)
+        logger.error("Pipeline failed fatally: %s", exc, exc_info=True)
+
     finally:
         total_duration = time.monotonic() - start
         end_time_iso = datetime.now(timezone.utc).isoformat()
-        save_scraper_log({
+        log_payload = {
             "started_at": start_time_iso,
             "completed_at": end_time_iso,
             "total_duration_seconds": round(total_duration, 2),
-            "status": status,
-            "error_message": error_message,
-            "platform_stats": platform_stats
-        })
-
+            "status": overall_status,
+            "error_message": overall_error,
+            "platform_stats": platform_stats,
+        }
+        if not dry_run:
+            try:
+                save_scraper_log(log_payload)
+            except Exception as e:
+                logger.warning("Failed to save scraper log: %s", e)
+            send_alert_if_needed(log_payload)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Demo data seeder (unchanged from original)
+# Demo Seeder & CLI
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _SEED_REVIEWS: list[dict[str, Any]] = [
-    # ── Negative — Altyapı
     {"text": "Mahallemizde altyapı çalışması yapıldı ama internet daha da kötüleşti. Fiber hat çekilecek denildi, 6 aydır bekliyoruz.", "sentiment": "Negative", "category": "Altyapı", "platform": "Şikayetvar", "rating": None},
     {"text": "Altyapı eski bakır kablo, fiber geçiş tarihi sürekli erteleniyor. Komşu mahallede fiber var bizde hâlâ ADSL.", "sentiment": "Negative", "category": "Altyapı", "platform": "Ekşi Sözlük", "rating": None},
-    {"text": "Yağmur yağdığında internet kesiliyor. Altyapı sorunlu ama kimse ilgilenmiyor. 3 kez arıza kaydı açtırdım.", "sentiment": "Negative", "category": "Altyapı", "platform": "Şikayetvar", "rating": None},
-    # ── Negative — Fiyat
     {"text": "Kampanya bitince fiyat 250 TL'den 480 TL'ye çıktı. Hiçbir bilgilendirme yapılmadı. Bu kabul edilemez!", "sentiment": "Negative", "category": "Fiyat", "platform": "Play Store", "rating": 1},
-    {"text": "Her 3 ayda bir zam geliyor. Başlangıçta ucuz diye geldim ama artık diğer operatörlerden farkı kalmadı.", "sentiment": "Negative", "category": "Fiyat", "platform": "App Store", "rating": 2},
-    {"text": "Taahhüt bitince fiyat uçtu, sadakat indirimi yok. Yeni müşteriye verilen kampanyayı bize vermiyorlar.", "sentiment": "Negative", "category": "Fiyat", "platform": "Şikayetvar", "rating": None},
-    # ── Negative — Kurulum
-    {"text": "Kurulum randevusu 3 kez ertelendi. Sonunda gelen teknisyen de işini bilmiyordu, kabloları yanlış bağladı.", "sentiment": "Negative", "category": "Kurulum", "platform": "Şikayetvar", "rating": None},
-    {"text": "Fiber kurulum için başvurduk, 3 hafta oldu hâlâ haber yok. Her aradığımda 'en kısa sürede' diyorlar.", "sentiment": "Negative", "category": "Kurulum", "platform": "Play Store", "rating": 1},
-    {"text": "Teknisyen geldi ama gerekli malzeme yokmuş. Tekrar gelecekmiş, 5 gündür bekliyorum.", "sentiment": "Negative", "category": "Kurulum", "platform": "Ekşi Sözlük", "rating": None},
-    # ── Negative — Müşteri Hizmetleri
-    {"text": "Müşteri hizmetlerini her aradığımda en az 30 dakika bekliyorum. Bağlandığımda da sorunumu çözmüyorlar.", "sentiment": "Negative", "category": "Müşteri Hizmetleri", "platform": "Play Store", "rating": 1},
-    {"text": "Chat desteği bot gibi çalışıyor, gerçek bir insanla konuşmak imkansız. Her seferinde aynı kalıp cevaplar.", "sentiment": "Negative", "category": "Müşteri Hizmetleri", "platform": "App Store", "rating": 1},
-    {"text": "Sosyal medyadan yazdım, 2 gün sonra cevap geldi. O da 'DM'den ulaşın' oldu. DM'den de cevap yok.", "sentiment": "Negative", "category": "Müşteri Hizmetleri", "platform": "Şikayetvar", "rating": None},
-    # ── Negative — Fatura
-    {"text": "Faturama tanımadığım bir ek hizmet bedeli eklenmiş. İtiraz ettim, 'siz onaylamışsınız' dediler. Onaylamadım!", "sentiment": "Negative", "category": "Fatura", "platform": "Şikayetvar", "rating": None},
-    {"text": "İptal ettiğim halde 2 ay daha fatura geldi. İade süreci çok uzun ve zahmetli.", "sentiment": "Negative", "category": "Fatura", "platform": "Play Store", "rating": 1},
-    {"text": "Fatura tutarı her ay farklı. Sabit paket alıyorum ama fatura sabit değil. Şeffaflık sıfır.", "sentiment": "Negative", "category": "Fatura", "platform": "App Store", "rating": 2},
-    # ── Negative — Hız
-    {"text": "100 Mbps paketim var ama akşam saatlerinde 5 Mbps bile zor alıyorum. YouTube bile donuyor.", "sentiment": "Negative", "category": "Hız", "platform": "Play Store", "rating": 1},
-    {"text": "Hız testi yapıyorum, taahhüt edilen hızın yarısını bile almıyorum. Akşam 7'den sonra kullanılamaz durumda.", "sentiment": "Negative", "category": "Hız", "platform": "Ekşi Sözlük", "rating": None},
-    {"text": "Fiber 50 Mbps paket aldım ama indirme hızı 15 Mbps'yi geçmiyor. Oyun indirmek işkence.", "sentiment": "Negative", "category": "Hız", "platform": "App Store", "rating": 1},
-    {"text": "Upload hızı çok düşük, evden çalışırken video konferans yapmak imkansız. Sürekli donma yaşıyorum.", "sentiment": "Negative", "category": "Hız", "platform": "Şikayetvar", "rating": None},
-    # ── Negative — Modem/Cihaz
-    {"text": "Verdikleri modem çöp, WiFi sinyali bir odayı bile karşılamıyor. Kendi modemimi kullanmama izin vermiyorlar.", "sentiment": "Negative", "category": "Modem/Cihaz", "platform": "Play Store", "rating": 1},
-    {"text": "Modem her gece 3-4 kez resetleniyor. Uyku modunda bile kopuyor. Cihaz değişimi talep ettim, 'stokta yok' dediler.", "sentiment": "Negative", "category": "Modem/Cihaz", "platform": "Şikayetvar", "rating": None},
-    {"text": "Router'ın firmware'i güncellenmiyor, güvenlik açığı var. Teknik destek 'biz müdahale edemiyoruz' diyor.", "sentiment": "Negative", "category": "Modem/Cihaz", "platform": "Ekşi Sözlük", "rating": None},
-    # ── Positive — Hız
-    {"text": "Fiber geçişten sonra internet süper hızlı. 100 Mbps alıyorum, hız testinde de taahhüt edilen rakamı görüyorum.", "sentiment": "Positive", "category": "Hız", "platform": "Play Store", "rating": 5},
+    {"text": "Fiber geçişten sonra internet süper hızlı. 100 Mbps alıyorum, taahhüt edilen rakamı görüyorum.", "sentiment": "Positive", "category": "Hız", "platform": "Play Store", "rating": 5},
     {"text": "TürkNet fiber gerçekten çok iyi. Ping değerlerim mükemmel, online oyunlarda hiç lag yaşamıyorum.", "sentiment": "Positive", "category": "Hız", "platform": "Ekşi Sözlük", "rating": None},
-    {"text": "200 Mbps fiber kullanıyorum, gece gündüz aynı hız. Çok memnunum, kesinlikle tavsiye ederim.", "sentiment": "Positive", "category": "Hız", "platform": "App Store", "rating": 5},
-    # ── Positive — Fiyat
-    {"text": "Fiyat/performans olarak piyasadaki en iyi seçenek TürkNet. Aynı hızı başka yerde bu fiyata bulamazsınız.", "sentiment": "Positive", "category": "Fiyat", "platform": "Play Store", "rating": 5},
-    {"text": "Ucuz ve kaliteli internet arayan herkese TürkNet'i öneriyorum. 2 yıldır kullanıyorum, memnunum.", "sentiment": "Positive", "category": "Fiyat", "platform": "App Store", "rating": 4},
-    # ── Positive — Müşteri Hizmetleri
-    {"text": "Müşteri hizmetleri çok ilgili. Sorunumu ilk aramada çözdüler, diğer operatörlerden çok farklı.", "sentiment": "Positive", "category": "Müşteri Hizmetleri", "platform": "Play Store", "rating": 5},
-    {"text": "Twitter'dan yazdım, 10 dakika içinde dönüş yaptılar. Sorunu aynı gün çözdüler. Bravo!", "sentiment": "Positive", "category": "Müşteri Hizmetleri", "platform": "App Store", "rating": 5},
-    {"text": "Çağrı merkezi personeli gerçekten yardımcı oluyor. Sabırlı ve çözüm odaklı. Teşekkürler TürkNet.", "sentiment": "Positive", "category": "Müşteri Hizmetleri", "platform": "Şikayetvar", "rating": None},
-    # ── Positive — Kurulum
-    {"text": "Fiber kurulum çok hızlı oldu. Başvurumdan 2 gün sonra teknisyen geldi, 1 saatte her şey hazırdı.", "sentiment": "Positive", "category": "Kurulum", "platform": "Play Store", "rating": 5},
-    {"text": "Kurulum ekibi çok profesyoneldi. Kabloları düzgün çektiler, her şeyi test edip gittiler.", "sentiment": "Positive", "category": "Kurulum", "platform": "Ekşi Sözlük", "rating": None},
-    # ── Positive — Genel
-    {"text": "3 yıldır TürkNet müşterisiyim, genel olarak çok memnunum. Ara sıra küçük aksaklıklar oluyor ama hızlı çözülüyor.", "sentiment": "Positive", "category": "Genel", "platform": "Play Store", "rating": 4},
-    {"text": "TürkNet'e geçmek en doğru kararımdı. Hem ucuz hem kaliteli. Ailecek mutluyuz.", "sentiment": "Positive", "category": "Genel", "platform": "App Store", "rating": 5},
-    # ── Mapped to Negative
-    {"text": "TürkNet ortalama bir servis sunuyor. Ne çok iyi ne çok kötü. Fiyatı makul, hız idare eder.", "sentiment": "Negative", "category": "Genel", "platform": "Ekşi Sözlük", "rating": None},
-    {"text": "Bir yıldır TürkNet kullanıyorum. Büyük sorun yaşamadım ama etkileyici bir şey de yok. Normal.", "sentiment": "Negative", "category": "Genel", "platform": "Play Store", "rating": 3},
-    {"text": "Hızlar fena değil ama mükemmel de değil. Fiyatı uygun olduğu için devam ediyorum.", "sentiment": "Negative", "category": "Hız", "platform": "App Store", "rating": 3},
-    {"text": "Modem fena değil aslında, WiFi menzili ortalama. Çok büyük evlerde sorun olabilir ama bizim ev için yeterli.", "sentiment": "Negative", "category": "Modem/Cihaz", "platform": "Play Store", "rating": 3},
-    {"text": "Fatura sistemi karışık ama sorduğunuzda açıklıyorlar. Online işlemler biraz geliştirilmeli.", "sentiment": "Negative", "category": "Fatura", "platform": "App Store", "rating": 3},
-    {"text": "Altyapı çalışması sırasında 1 gün internet kesildi ama önceden bilgilendirdiler. Kabul edilebilir.", "sentiment": "Negative", "category": "Altyapı", "platform": "Ekşi Sözlük", "rating": None},
-    {"text": "Kurulum süreci normal sürdü, 1 hafta içinde bağlandık. Hızlı değildi ama çok da yavaş değildi.", "sentiment": "Negative", "category": "Kurulum", "platform": "Şikayetvar", "rating": None},
-    # ── Extra negatives for realistic skew
-    {"text": "İnternet 2 gündür yok. Arıza kaydı açtırdım ama tahmini çözüm süresi bile verilmedi.", "sentiment": "Negative", "category": "Altyapı", "platform": "Şikayetvar", "rating": None},
-    {"text": "Cayma bedeli çok yüksek. 24 ay taahhüt verdim ama hizmet bu kadar kötüyken devam etmek zor.", "sentiment": "Negative", "category": "Fiyat", "platform": "Play Store", "rating": 1},
-    {"text": "Uygulama sürekli çöküyor, fatura bilgilerime ulaşamıyorum. Çok kötü bir uygulama.", "sentiment": "Negative", "category": "Genel", "platform": "Play Store", "rating": 1},
-    {"text": "Gece yarısı internet hızı 1 Mbps'ye düşüyor. Netflix izlemek imkansız. Çok hayal kırıklığı.", "sentiment": "Negative", "category": "Hız", "platform": "App Store", "rating": 1},
 ]
-
-_SEED_AUTHORS: list[str] = [
-    "Ahmet Y.", "Fatma K.", "Mehmet D.", "Zeynep A.", "Can B.",
-    "Elif S.", "Burak T.", "Selin Ö.", "Hakan M.", "Ayşe R.",
-    "Emre K.", "Deniz V.", "Merve Ç.", "Oğuz H.", "Gizem N.",
-    "Ali P.", "Ecem T.", "Barış U.", "Nur G.", "Serkan L.",
-    "Pınar F.", "Murat İ.", "Ceren B.", "Uğur S.", "Damla E.",
-]
-
 
 def seed_demo_data() -> None:
-    """Insert ~50 realistic demo reviews with pre-assigned sentiments and categories."""
-    logger.info("=" * 60)
     logger.info("Seeding demo data…")
-    logger.info("=" * 60)
-
     now = datetime.now(tz=timezone.utc)
     reviews: list[dict[str, Any]] = []
+    for i, s in enumerate(_SEED_REVIEWS, start=1):
+        reviews.append({
+            "platform_name": s["platform"],
+            "external_id": f"seed-{i}",
+            "author": "Demo Kullanıcı",
+            "original_text": s["text"],
+            "sentiment": s["sentiment"],
+            "category": s["category"],
+            "rating": s.get("rating"),
+            "source_url": "https://turk.net",
+            "scraped_at": (now - timedelta(days=i)).isoformat(),
+        })
+    inserted, _ = save_reviews(reviews)
+    logger.info("Seeded %d demo reviews.", inserted)
 
-    for seed in _SEED_REVIEWS:
-        random_days = random.randint(0, 30)
-        random_hours = random.randint(0, 23)
-        random_mins = random.randint(0, 59)
-        review_dt = now - timedelta(
-            days=random_days, hours=random_hours, minutes=random_mins
-        )
-
-        reviews.append(
-            {
-                "platform_name": seed["platform"],
-                "author": random.choice(_SEED_AUTHORS),
-                "original_text": seed["text"],
-                "sentiment": seed["sentiment"],
-                "category": seed["category"],
-                "rating": seed.get("rating"),
-                "source_url": _platform_url(seed["platform"]),
-                "scraped_at": review_dt.isoformat(),
-            }
-        )
-
-    inserted = save_reviews(reviews)
-
-    sentiments: dict[str, int] = {}
-    categories: dict[str, int] = {}
-    platforms: dict[str, int] = {}
-    for r in reviews:
-        sentiments[r["sentiment"]] = sentiments.get(r["sentiment"], 0) + 1
-        categories[r["category"]] = categories.get(r["category"], 0) + 1
-        platforms[r["platform_name"]] = platforms.get(r["platform_name"], 0) + 1
-
-    logger.info("── Seed summary ──")
-    logger.info("Total reviews: %d (inserted: %d)", len(reviews), inserted)
-    logger.info("Sentiments: %s", sentiments)
-    logger.info("Categories: %s", categories)
-    logger.info("Platforms:  %s", platforms)
-    logger.info("=" * 60)
-
-
-def _platform_url(platform: str) -> str:
-    urls = {
-        "Play Store": f"https://play.google.com/store/apps/details?id={PLAY_STORE_APP_ID}",
-        "App Store": f"https://apps.apple.com/{APP_STORE_COUNTRY}/app/{APP_STORE_APP_NAME}",
-        "Şikayetvar": f"https://www.sikayetvar.com/{SIKAYETVAR_BRAND}",
-        "Ekşi Sözlük": f"https://eksisozluk.com/{EKSISOZLUK_TOPIC}",
-    }
-    return urls.get(platform, "")
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CLI entry point
-# ═══════════════════════════════════════════════════════════════════════════════
 
 def main() -> None:
-    """Parse CLI arguments and dispatch to the appropriate function."""
     parser = argparse.ArgumentParser(
-        description="Customer Voice Dashboard — incremental scraper pipeline",
+        description="Customer Voice Dashboard — incremental scraper pipeline v2",
+    )
+    parser.add_argument("--seed", action="store_true", help="Seed demo reviews")
+    parser.add_argument("--clear", action="store_true", help="Delete all records from reviews")
+    parser.add_argument("--dry-run", action="store_true", help="Scrape & analyze without DB writes")
+    parser.add_argument("--backfill", action="store_true", help="Backfill historical reviews past the known watermark")
+    parser.add_argument(
+        "--since",
+        type=str,
+        default=None,
+        help="Cutoff date for backfill in YYYY-MM-DD format (defaults to 30 days ago if --backfill is passed)",
     )
     parser.add_argument(
-        "--seed",
-        action="store_true",
-        help="Seed the database with ~50 realistic demo reviews instead of scraping.",
-    )
-    parser.add_argument(
-        "--clear",
-        action="store_true",
-        help="Delete all records from the reviews table.",
+        "--platform",
+        type=str,
+        default=None,
+        help="Run specific platform(s), comma-separated: eksi,sikayetvar,play,app",
     )
     args = parser.parse_args()
 
     if args.clear:
         clear_all_reviews()
-    elif args.seed:
+        return
+
+    if args.seed:
         seed_demo_data()
-    else:
-        run_pipeline()
+        return
+
+    backfill_since = None
+    if args.backfill:
+        if args.since:
+            try:
+                backfill_since = datetime.strptime(args.since, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            except ValueError:
+                logger.error("Invalid --since format. Use YYYY-MM-DD (e.g. 2026-09-01).")
+                sys.exit(1)
+        else:
+            backfill_since = datetime.now(timezone.utc) - timedelta(days=30)
+
+    target_platforms = [p.strip().lower() for p in args.platform.split(",")] if args.platform else None
+
+    run_pipeline(
+        dry_run=args.dry_run,
+        backfill_since=backfill_since,
+        target_platforms=target_platforms,
+    )
 
 
 if __name__ == "__main__":

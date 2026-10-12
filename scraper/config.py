@@ -7,11 +7,13 @@ Loads environment variables from .env file and exports them as constants.
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-# Load .env from the same directory as this file
-_env_path = Path(__file__).resolve().parent / ".env"
-load_dotenv(dotenv_path=_env_path)
+try:
+    from dotenv import load_dotenv
+    # Load .env from the same directory as this file
+    _env_path = Path(__file__).resolve().parent / ".env"
+    load_dotenv(dotenv_path=_env_path)
+except ImportError:
+    pass
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
 SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
@@ -39,6 +41,22 @@ EKSISOZLUK_TOPICS: list[str] = [
     "turknet-rezilligi",
     "turknet-online-islemler"
 ]
+# All search phrases used for topic discovery (every result page is read).
+EKSI_SEARCH_KEYWORDS: list[str] = ["turknet", "türknet", "turk net", "türk net"]
+# Topics scanned on every run regardless of discovery / change detection.
+# The main "türk net" topic is where most daily entries are written.
+EKSI_PINNED_TOPICS: list[str] = ["turk-net--912228"]
+# A discovered slug must match this to be considered TürkNet-related.
+EKSI_TOPIC_PATTERN: str = r"(^|-)t[uü]rk-?net[a-z0-9]{0,4}(-|$)"
+# Re-scan a topic even if its entry count didn't change after this many days
+# (catches "one deleted + one added" cases).
+EKSI_FULL_RESCAN_DAYS: int = int(os.getenv("EKSI_FULL_RESCAN_DAYS", "7"))
+
+# ── Incremental scraping ─────────────────────────────────────────────────────
+# For a source that has never been scraped, how far back to go on a normal run.
+INITIAL_LOOKBACK_DAYS: int = int(os.getenv("INITIAL_LOOKBACK_DAYS", "180"))
+# Extra fully-known pages to scan before stopping (safety overlap).
+OVERLAP_PAGES: int = int(os.getenv("OVERLAP_PAGES", "1"))
 
 # ── Gemini Model ──────────────────────────────────────────────────────────────
 GEMINI_MODEL: str = "gemini-2.5-flash"

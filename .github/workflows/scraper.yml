@@ -2,16 +2,36 @@ name: Daily Review Scraper
 
 on:
   schedule:
-    # Runs at 04:00 UTC (07:00 TRT) every day
+    # Runs at 04:00 UTC (07:00 TRT) and 16:00 UTC (19:00 TRT) every day
     - cron: '0 4 * * *'
-  # Allows you to run this workflow manually from the Actions tab
+    - cron: '0 16 * * *'
+  # Allows you to run this workflow manually from the Actions tab with optional parameters
   workflow_dispatch:
+    inputs:
+      backfill:
+        description: 'Backfill historical data (bypass watermark)'
+        type: boolean
+        default: false
+      since:
+        description: 'Cutoff date for backfill (YYYY-MM-DD)'
+        type: string
+        default: ''
+      dry_run:
+        description: 'Dry run (do not write to database)'
+        type: boolean
+        default: false
+      platform:
+        description: 'Specific platform (leave empty for all, or: eksi, sikayetvar, play, app)'
+        type: string
+        default: ''
+
+concurrency:
+  group: customer-voice-scraper
+  cancel-in-progress: false
 
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
-    
-    # We set a max timeout just in case it hangs, default is 6 hours, we set it to 2 hours
     timeout-minutes: 120
 
     steps:
@@ -22,26 +42,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip' # Caches pip dependencies for faster runs
+          cache: 'pip'
 
       - name: Install Dependencies
         run: |
           cd scraper
           python -m pip install --upgrade pip
-          # app-store-scraper has a strict pinned dependency on requests==2.23.0
-          # which conflicts with google-genai. We install it without dependencies
-          # since it works perfectly fine with modern requests versions.
           pip install --no-deps app-store-scraper==0.3.5
           pip install -r requirements.txt
 
       - name: Random Delay (Anti-Bot)
-        # Bypasses bot detection by starting at a random time within the 07:00 - 08:00 AM window
-        # The script will sleep a random amount between 0 and 3600 seconds (1 hour)
+        # Random sleep up to 20 minutes when running on schedule to prevent fixed-time bot fingerprinting
         run: |
-          # If this is a manual trigger, don't sleep
           if [ "${{ github.event_name }}" == "schedule" ]; then
-            DELAY=$((RANDOM % 3600))
-            echo "Running on a schedule. Sleeping for $DELAY seconds to prevent fixed-time bot detection..."
+            DELAY=$((RANDOM % 1200))
+            echo "Running on a schedule. Sleeping for $DELAY seconds..."
             sleep $DELAY
           else
             echo "Running manually. Skipping delay."
@@ -49,9 +64,29 @@ jobs:
 
       - name: Run Scraper
         env:
-          # Pulling secrets from GitHub Repository Secrets
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SIKAYETVAR_PROXY_URL: ${{ secrets.SIKAYETVAR_PROXY_URL }}
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
         run: |
           cd scraper
-          python main.py
+          CMD="python main.py"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+          if [ "${{ inputs.backfill }}" = "true" ]; then
+            CMD="$CMD --backfill"
+            if [ -n "${{ inputs.since }}" ]; then
+              CMD="$CMD --since ${{ inputs.since }}"
+            fi
+          fi
+          if [ -n "${{ inputs.platform }}" ]; then
+            CMD="$CMD --platform ${{ inputs.platform }}"
+          fi
+          echo "Executing: $CMD"
+          eval $CMD
+
+      - name: Keep Workflow Active
+        # Prevents GitHub from automatically disabling scheduled workflows after 60 days of inactivity
+        uses: gautamkrishnar/keepalive-workflow@v2
+        if: always()

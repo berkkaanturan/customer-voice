@@ -1,76 +1,57 @@
 """
-Şikayetvar adapter for incremental scraping.
+Şikayetvar adapter (v2 — resilient incremental).
 
-Scrapes the TürkNet brand page across 22 complaint categories plus the
-general listing.  Each category is treated as a separate incremental
-sub-source with its own page traversal.
-
-Default sort: newest first → DESC.
+Improvements over v1:
+---------------------
+* Primary source is the main brand listing (https://www.sikayetvar.com/turknet?page=N)
+  which contains ALL complaints across all categories in newest-first order.
+  Complaint cards already contain the category hashtag (e.g. "# Modem"), so we
+  can read category tags directly from the card without crawling 22 extra sub-URLs.
+  Daily request volume drops from ~50 requests to ~2–4 requests.
+* Uses ``HttpClient`` with Chrome TLS impersonation (via ``curl_cffi``) and session
+  warm-up on the home page.  Retries with backoff on 403/429 and supports an optional
+  proxy via ``SIKAYETVAR_PROXY_URL``.
+* Stable ``external_id`` derived from complaint path (e.g. ``turknet/<slug>``).
+* Driven by the shared ``scan_pages`` engine (ID watermark + overlap stop rule).
 """
 
 from __future__ import annotations
 
 import logging
-import random
-import time
+import re
 from datetime import datetime, timedelta, timezone
 
-import requests
 from bs4 import BeautifulSoup
 
-from base_scraper import IncrementalScraper, RawReview, text_hash
-from config import get_random_headers
+from base_scraper import IncrementalScraper, RawReview, ScrapeContext
+from http_client import BlockedError, HttpClient
 
 logger = logging.getLogger(__name__)
 
-# ── All Şikayetvar categories for TürkNet ────────────────────────────────────
-SIKAYETVAR_CATEGORIES: dict[str, str] = {
-    "abonelik": "Abonelik",
-    "adres-degisikligi": "Adres Değişikliği",
-    "adsl": "ADSL",
-    "altyapi": "Altyapı",
-    "altyapisiz-internet": "Altyapısız İnternet",
-    "ariza": "Arıza",
-    "bakim-calismasi": "Bakım Çalışması",
-    "dondurma-islemi": "Dondurma İşlemi",
-    "ev-telefonu-hizmeti": "Ev Telefonu Hizmeti",
-    "evde-internet": "Evde İnternet",
-    "fatura": "Fatura",
-    "fiber-internet": "Fiber İnternet",
-    "gezgin-internet": "Gezgin İnternet",
-    "gigafiber": "Gigafiber",
-    "hiz-testi": "Hız Testi",
-    "internet-kesintisi": "İnternet Kesintisi",
-    "internet-paketleri": "İnternet Paketleri",
-    "modem": "Modem",
-    "online-islemler": "Online İşlemler",
-    "ping-sorunu": "Ping Sorunu",
-    "vdsl": "VDSL",
-    "yalin-internet": "Yalın İnternet",
-}
+BASE = "https://www.sikayetvar.com"
 
 
 def _parse_turkish_date(date_str: str | None) -> str:
-    """Parse Turkish relative or absolute dates to ISO format."""
+    """Parse Turkish relative or absolute dates to ISO format (UTC)."""
     now = datetime.now(tz=timezone.utc)
     if not date_str:
         return now.isoformat()
 
-    date_str = date_str.lower().strip()
+    cleaned = date_str.lower().strip()
 
-    if "saat önce" in date_str or "saat once" in date_str:
+    if "saat önce" in cleaned or "saat once" in cleaned:
         try:
-            hours = int(date_str.split()[0])
+            hours = int(cleaned.split()[0])
             return (now - timedelta(hours=hours)).isoformat()
         except Exception:
             pass
-    elif "dakika önce" in date_str or "dakika once" in date_str:
+    elif "dakika önce" in cleaned or "dakika once" in cleaned:
         try:
-            mins = int(date_str.split()[0])
+            mins = int(cleaned.split()[0])
             return (now - timedelta(minutes=mins)).isoformat()
         except Exception:
             pass
-    elif "dün" in date_str or "dun" in date_str:
+    elif "dün" in cleaned or "dun" in cleaned:
         return (now - timedelta(days=1)).isoformat()
 
     months = {
@@ -80,7 +61,7 @@ def _parse_turkish_date(date_str: str | None) -> str:
         "ekim": 10, "kasım": 11, "kasim": 11, "aralık": 12, "aralik": 12,
     }
 
-    parts = date_str.split()
+    parts = cleaned.split()
     if len(parts) >= 2:
         try:
             day = int(parts[0])
@@ -105,32 +86,74 @@ def _parse_turkish_date(date_str: str | None) -> str:
     return now.isoformat()
 
 
-def _parse_page(html: str, url: str, category: str) -> list[RawReview]:
-    """Parse complaint cards from an HTML page."""
-    soup = BeautifulSoup(html, "html.parser")
-    cards = soup.select("article") or soup.select(".complaint-card")
-    reviews: list[RawReview] = []
-
-    for card in cards:
-        title_el = card.select_one("h3 a")
-        subject = title_el.get_text(strip=True) if title_el else ""
-        relative_url = title_el.get("href", "") if title_el else ""
-        source_url = (
-            f"https://www.sikayetvar.com{relative_url}"
-            if relative_url
-            else url
-        )
-        author_el = card.select_one("header span.font-bold")
-        author = author_el.get_text(strip=True) if author_el else "Anonim"
-        date_el = card.select_one("header span.text-zinc-500")
-        date_str = date_el.get_text(strip=True) if date_el else None
-        text_el = card.select_one("p.wrap-anywhere") or card.select_one("p")
-        text = text_el.get_text(strip=True) if text_el else ""
-
+def _extract_category(card: BeautifulSoup) -> str:
+    """Extract category tag if present on card, else fallback to Genel."""
+    cat_link = card.select_one("a[data-ga-element='Collection_Name_Button']") or card.select_one("a[href*='/turknet/'][title]")
+    if cat_link:
+        text = cat_link.get_text(strip=True).lstrip("#").strip()
         if text:
+            return text
+    return "Genel"
+
+
+class SikayetvarAdapter(IncrementalScraper):
+    platform_name = "Şikayetvar"
+
+    def __init__(self, brand_slug: str = "turknet", max_pages: int = 50) -> None:
+        super().__init__()
+        self.brand_slug = brand_slug
+        self.max_pages = max_pages
+        self.http = HttpClient(
+            "Şikayetvar",
+            min_delay=2.5,
+            max_delay=5.0,
+            retries=3,
+            backoff_base=15.0,
+            warmup_url=f"{BASE}/{brand_slug}",
+            proxy_env="SIKAYETVAR_PROXY_URL",
+        )
+
+    def _parse_page(self, html: str) -> list[RawReview]:
+        soup = BeautifulSoup(html, "html.parser")
+        cards = soup.select("article") or soup.select(".complaint-card")
+        reviews: list[RawReview] = []
+
+        for card in cards:
+            title_el = card.select_one("h3 a")
+            subject = title_el.get_text(strip=True) if title_el else ""
+            rel_href = title_el.get("href", "").strip() if title_el else ""
+            if not rel_href:
+                continue
+
+            # e.g. /turknet/turknet-ev-interneti-surekli-kopuyor...
+            clean_path = rel_href.split("?")[0].lstrip("/")
+            external_id = clean_path
+            source_url = f"{BASE}/{clean_path}"
+
+            author_el = card.select_one("header span.font-bold") or card.select_one("span[aria-label]")
+            author = author_el.get_text(strip=True) if author_el else "Anonim"
+
+            # Prefer aria-label on time/date span for exact date (e.g. '13 Ekim 2026 00:01')
+            date_el = (
+                card.select_one("header span[aria-label*='20']")
+                or card.select_one("header span.text-zinc-500")
+            )
+            date_str = None
+            if date_el:
+                date_str = date_el.get("aria-label") or date_el.get_text(strip=True)
+
+            text_el = card.select_one("p.wrap-anywhere") or card.select_one("p")
+            text = text_el.get_text(" ", strip=True) if text_el else ""
+
+            if not text:
+                continue
+
+            category = _extract_category(card)
+
             reviews.append(
                 RawReview(
-                    platform_name="Şikayetvar",
+                    platform_name=self.platform_name,
+                    external_id=external_id,
                     author=author,
                     original_text=text,
                     rating=None,
@@ -141,119 +164,43 @@ def _parse_page(html: str, url: str, category: str) -> list[RawReview]:
                 )
             )
 
-    return reviews
+        return reviews
 
+    def run_incremental(self, ctx: ScrapeContext) -> list[RawReview]:
+        """Scan the brand's main complaint feed page by page."""
+        source_key = "genel"
+        errors: list[str] = []
 
-class SikayetvarAdapter(IncrementalScraper):
-    """Incremental adapter for Şikayetvar.
+        def fetch(page: int) -> list[RawReview]:
+            url = f"{BASE}/{self.brand_slug}?page={page}"
+            referer = f"{BASE}/{self.brand_slug}" if page > 1 else BASE + "/"
+            resp = self.http.get(url, referer=referer)
+            if resp.status_code == 404:
+                return []
+            return self._parse_page(resp.text)
 
-    Since Şikayetvar has 22+ categories and each has its own page
-    sequence, we override `run_incremental` to handle per-category
-    incremental logic independently.
-    """
-
-    platform_name = "Şikayetvar"
-    sort_direction = "desc"
-
-    # Maximum pages to scan per category before giving up
-    MAX_PAGES_PER_CATEGORY = 50
-
-    def __init__(self, brand_slug: str = "turknet"):
-        self.brand_slug = brand_slug
-
-    # These are not used directly since we override run_incremental,
-    # but are required by the ABC.
-    def total_pages(self) -> int:
-        return 0
-
-    def fetch_page(self, page_number: int) -> list[RawReview]:
-        return []
-
-    def _fetch_category_page(
-        self, cat_slug: str | None, cat_name: str, page: int,
-    ) -> list[RawReview]:
-        """Fetch a single page of a specific category (or general listing)."""
-        if cat_slug:
-            url = f"https://www.sikayetvar.com/{self.brand_slug}/{cat_slug}?page={page}"
-        else:
-            url = f"https://www.sikayetvar.com/{self.brand_slug}?page={page}"
-
-        try:
-            resp = requests.get(url, headers=get_random_headers(), timeout=15)
-            if resp.status_code != 200:
-                raise Exception(f"HTTP {resp.status_code} - {resp.reason}")
-            return _parse_page(resp.text, url, cat_name)
-        except Exception as exc:
-            logger.warning(
-                "Şikayetvar (%s) page %d failed: %s", cat_name, page, exc,
-            )
-            raise  # Re-raise so the adapter fails and logs an error in dashboard
-
-    def run_incremental(self, existing_hashes: set[str]) -> list[RawReview]:
-        """Run incremental scrape across all categories independently.
-
-        Each category is traversed from page 1 (newest) forward.
-        When a known hash is found in a category, that category stops
-        but others continue — new complaints may arrive in any category.
-        """
         all_new: list[RawReview] = []
+        try:
+            all_new = self.scan_pages(
+                ctx,
+                source_key,
+                range(1, self.max_pages + 1),
+                fetch,
+                label=f"Şikayetvar/{self.brand_slug}",
+                max_pages=self.max_pages,
+            )
+        except BlockedError as exc:
+            logger.error("Şikayetvar: blocked (403/429): %s", exc)
+            errors.append(str(exc))
+        except Exception as exc:
+            logger.error("Şikayetvar: scrape failed: %s", exc, exc_info=True)
+            errors.append(str(exc))
 
-        # Build sources: general + all categories
-        sources: list[tuple[str | None, str]] = [(None, "Genel")]
-        sources.extend(SIKAYETVAR_CATEGORIES.items())
-
-        for cat_slug, cat_name in sources:
-            cat_new: list[RawReview] = []
-            stop_cat = False
-
-            for page in range(1, self.MAX_PAGES_PER_CATEGORY + 1):
-                if stop_cat:
-                    break
-
-                page_reviews = self._fetch_category_page(cat_slug, cat_name, page)
-
-                if page == 1 and cat_name == "Genel" and not page_reviews:
-                    raise Exception("Şikayetvar 'Genel' page 1 returned 0 reviews. Either HTML structure changed or blocked by CAPTCHA.")
-
-                if not page_reviews:
-                    break  # no more pages
-
-                page_new = 0
-                found_known = False
-                for review in page_reviews:
-                    h = text_hash(review.get("original_text", ""))
-                    if h in existing_hashes:
-                        found_known = True
-                    else:
-                        cat_new.append(review)
-                        existing_hashes.add(h)
-                        page_new += 1
-
-                logger.info(
-                    "Şikayetvar (%s) page %d: %d fetched, %d new, %d known.",
-                    cat_name, page, len(page_reviews), page_new,
-                    len(page_reviews) - page_new,
-                )
-
-                if found_known:
-                    logger.info(
-                        "Şikayetvar (%s): known hash found on page %d — "
-                        "stopping this category.", cat_name, page,
-                    )
-                    stop_cat = True
-
-                # Throttle
-                if not stop_cat:
-                    time.sleep(random.uniform(self.min_delay, self.max_delay))
-
-            if cat_new:
-                logger.info(
-                    "Şikayetvar (%s): %d new reviews collected.", cat_name, len(cat_new),
-                )
-            all_new.extend(cat_new)
-
-        logger.info(
-            "[%s] Incremental scrape complete: %d new reviews across all categories.",
-            self.platform_name, len(all_new),
-        )
+        self.stats = {
+            "requests": self.http.request_count,
+            "blocked": self.http.blocked_count,
+            "using_proxy": self.http.using_proxy,
+            "new_reviews": len(all_new),
+            "errors": errors,
+        }
         return all_new
